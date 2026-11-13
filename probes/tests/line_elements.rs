@@ -274,16 +274,25 @@ fn caret_geometry_from_spans() {
         cells.push((text.chars().count(), rect.width));
         span = s.next_sibling().unwrap();
     }
-    // Skip the inline-block gutter; every token span should be n * cell.
-    let (n, w) = cells[1];
-    let cell = w / n as f32;
-    println!("monospace cell width from a {n}-char span: {cell} px");
-    for (n, w) in &cells[1..] {
-        assert!(
-            (w - cell * *n as f32).abs() < 0.01,
-            "span of {n} chars is {w}px, cell {cell}px"
-        );
-    }
+    // Skip the inline-block gutter. Box widths are in layout units of 1/64
+    // px (LayoutUnit, as in Chromium), so a span of n characters measures
+    // n * cell within one unit. Every span must agree on one cell width.
+    const LAYOUT_UNIT: f32 = 1.0 / 64.0;
+    let tokens = &cells[1..];
+    let low = tokens
+        .iter()
+        .map(|(n, w)| (w - LAYOUT_UNIT) / *n as f32)
+        .fold(f32::MIN, f32::max);
+    let high = tokens
+        .iter()
+        .map(|(n, w)| (w + LAYOUT_UNIT) / *n as f32)
+        .fold(f32::MAX, f32::min);
+    println!(
+        "monospace cell width from {} spans: {low}..{high} px",
+        tokens.len()
+    );
+    assert!(low <= high, "spans disagree on the cell width: {tokens:?}");
+    let cell = (low + high) / 2.0;
 
     // Point to element works; point to text offset has no API.
     let rect = line.bounding_rect().unwrap().unwrap();
