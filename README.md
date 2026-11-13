@@ -8,7 +8,8 @@ with no webview that renders like Chromium. This sample uses only Div's
 public API; every temporary workaround carries a `// div-gap: <n>` comment
 naming the platform feature that will replace it.
 
-Status: **phase 1, investigation.** There is no editor yet.
+Status: **phase 2, porting.** The state layer is being ported; there is no
+editor view yet. The milestones are in [docs/design.md](docs/design.md#8-phase-2-plan).
 
 - [docs/design.md](docs/design.md): packages → the platform features that
   power them → what Div has, what is missing, owner and size; measurements;
@@ -17,6 +18,8 @@ Status: **phase 1, investigation.** There is no editor yet.
   features (`contenteditable`, input events, Selection and Range, IME,
   clipboard and drag and drop, observers, fast line rendering, accessible text).
 - [probes/tests](probes/tests): the headless probes behind the design.
+- [state](state): `editor-state`, a port of `@codemirror/state` 6.7.6 with
+  its upstream tests (`cargo test -p editor-state`). No Div dependency.
 
 ## Running the probes
 

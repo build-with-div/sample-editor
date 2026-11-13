@@ -11,8 +11,10 @@ So this design leads with the packages, then the platform features that
 power them, then what Div has, what is missing, who owns it and how big it
 is. Draft Div APIs for the missing features are in [rfc-text.md](rfc-text.md).
 
-Pinned Div: `565db46a` (build-with-div/div). References such as
+Phase 1 read Div at `565db46a` (build-with-div/div). References such as
 `divui/src/document.rs:1588` are paths under Div's `crates/` at that commit.
+Phase 2 pins Div `92ea25a0`, which adds only component `{expr}` children
+over `565db46a`.
 
 ## 1. Packages and the platform features that power them
 
@@ -302,8 +304,9 @@ Lexical follow it later in a rich-text sample.
 
 ```
 editor-state  (port of @codemirror/state; no Div dependency)
-  Text (rope; ropey) · EditorSelection (multiple ranges) · Transaction
-  History (undo with selection restore) · syntax via tree-sitter
+  Text (CM6's line tree) · ChangeSet · EditorSelection (multiple ranges)
+  Facet/StateField · Transaction · RangeSet (decorations)
+  History (undo with selection restore, from @codemirror/commands)
       │ ViewUpdate
       ▼
 editor-view   (port of @codemirror/view, on Div's DOM)
@@ -351,23 +354,35 @@ while Div implements the features. Each is labelled in code with
 | The editor kept in a block-only subtree; tokens of the same colour merged into one span | 16 | Fast DOM line rendering |
 | Double and triple click timed by the app | 15 | `MouseEvent.detail`, `dblclick` |
 
-## 8. Phase 2 plan (on the parent's go)
+## 8. Phase 2 plan
 
-1. Pin CM6 and Monaco versions. Record every DOM/CSS/event API their
-   published source calls, and turn section 1's matrix into a checked
-   list. Keep the reference-capture page (section 5, step 1) in this repo.
-2. Run the line-rendering benchmark (section 4) in pinned Chromium on the
-   same machine. Hand both numbers to the engine track as feature 16's
-   target.
-3. Port `@codemirror/state` (text, selection, transactions, history),
-   with unit tests and no Div.
-4. Port the view on the scaffolding: viewport, line DOM, gutter, layers
-   and keymap. Run the structural and pixel fidelity checks against CM6
-   for static states.
-5. Add tree-sitter highlighting, search, bracket matching, multiple
-   selections and folding. Behavioural fidelity runs per feature.
-6. As each Div feature lands, remove its scaffolding. Re-run the fidelity
-   suite and record the change in `docs/framework-gaps.md`.
+The parent approved Phase 2 on 13 Nov 2026, alongside Div's Tier 0
+foundations (stylesheets and selectors, the UA stylesheet, custom
+properties, the per-box cost and shaping cache, damage tracking,
+`requestAnimationFrame`, `ResizeObserver`, Pointer Events). Selection,
+Range, `contenteditable` and IME (features 2–7) are not scheduled yet, so
+the port starts with the layers that run on current Div. Each milestone is
+one focused PR, merged before the next. Upstream: `@codemirror/state`
+6.7.6, `@codemirror/view` 6.43.15, `@codemirror/commands` 6.11.1 (npm,
+13 Nov 2026).
+
+| # | Milestone | Upstream | Needs from Div |
+| --- | --- | --- | --- |
+| M1 | `Text`, `ChangeSet`, `EditorSelection` with upstream tests; pin Div `92ea25a0` | state `text.ts`, `change.ts`, `selection.ts` | nothing |
+| M2 | Facets, state fields, compartments, `EditorState`, transactions, annotations and effects, change filters; character helpers | state `facet.ts`, `state.ts`, `transaction.ts`, `char.ts`, `column.ts`, `charcategory.ts` | nothing |
+| M3 | `RangeSet` and `RangeValue`: the storage for decorations, gutter markers and folds | state `rangeset.ts` | nothing |
+| M4 | History and the default commands and keymap, on state alone | commands | nothing |
+| M5 | Fidelity tooling: the pinned packages, the reference-capture page and the line-rendering benchmark in Chromium 147 (section 5 step 1, section 4) | view, state | Div's harness tooling (Chromium in WSL) |
+| M6 | View, static: `.cm-editor`, `.cm-scroller`, `.cm-content`, `.cm-line`, the viewport with gap spacers, mark/widget/line/replace decorations, gutters and line numbers, the theme; structural and pixel diffs against M5's captures | view `docview`, `viewport`, `decoration`, `gutter`, `theme` | 14 (Tier 0 stylesheets; inline styles as `div-gap: 14` until then), 16 (Tier 0 per-box cost) |
+| M7 | View, interactive on labelled scaffolding: cursor and selection layers, `posAtCoords`/`coordsAtPos`, keymap through `w3c-keyname`, text through the input proxy, scrolling, the measure cycle | view `input`, `cursor`, `layer`, `keymap` | 2–7 (`div-gap` scaffolding), 11 and 13 (Tier 0) |
+| M8 | Language and features: highlighting, search, bracket matching, multiple selections, folding, each with behavioural fidelity | language, search, autocomplete | as M7 |
+
+Every milestone after M5 runs the fidelity checks in section 5 and reports
+measured numbers. The highlighter (M8) follows CM6's design, a parse tree
+mapped to `@lezer/highlight` tags; whether the tree comes from a port of
+the Lezer runtime or from tree-sitter is decided at M8 and recorded here.
+As each Div feature lands, its scaffolding is removed, the fidelity suite
+re-runs and `docs/framework-gaps.md` records the change.
 
 ## 9. Alternatives considered
 
