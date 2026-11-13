@@ -100,7 +100,7 @@ fn textarea_editor_behaviour() {
         .unwrap()
         .starts_with("abfn item_0"));
 
-    // div-gap: 4. ArrowDown does not move the caret to the next line.
+    // div-gap: 21. ArrowDown does not move the caret to the next line.
     probe.app.press(Key::ArrowDown);
     let after_down = area.selection().unwrap();
     println!("selection after ArrowDown from (2, 2): {after_down:?}");
@@ -122,7 +122,7 @@ fn textarea_editor_behaviour() {
     );
     assert!(!value.contains('\t'));
 
-    // div-gap: 4. Undo restores the value but puts the caret at the end.
+    // div-gap: 21. Undo restores the value but puts the caret at the end.
     area.focus().unwrap();
     probe.app.press_with(Modifiers::CTRL, Key::Z);
     let after_undo = area.selection().unwrap();
@@ -131,7 +131,7 @@ fn textarea_editor_behaviour() {
     assert_eq!(after_undo, Some((end, end)));
 
     // Scrolling: a 200-line textarea in a 580px box.
-    // div-gap: 4. The textarea's content does not overflow into a scroll range.
+    // div-gap: 21. The textarea's content does not overflow into a scroll range.
     let metrics = area.scroll_metrics().unwrap().unwrap();
     println!("textarea scroll metrics with 200 lines: {metrics:?}");
     assert_eq!(metrics.scroll_height, metrics.client_height);

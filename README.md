@@ -1,16 +1,21 @@
 # sample-editor
 
-A text and code editor built on [Div](https://github.com/build-with-div/div),
-to find what Div needs for professional desktop editors. Div is a native Rust
-UI framework with no webview; this sample uses only its public API and marks
-each workaround with a `// div-gap: <n>` comment.
+A port of a code editor (CodeMirror 6's architecture) to
+[Div](https://github.com/build-with-div/div), to find the web platform
+features Div must implement for the editors professionals use: CodeMirror 6,
+Monaco, ProseMirror/TipTap and Lexical. Div is a native Rust UI framework
+with no webview that renders like Chromium. This sample uses only Div's
+public API; every temporary workaround carries a `// div-gap: <n>` comment
+naming the platform feature that will replace it.
 
 Status: **phase 1, investigation.** There is no editor yet.
 
-- [docs/design.md](docs/design.md): what Div offers an editor today, the
-  measurements, the recommended architecture and the Div work it needs.
-- [docs/rfc-text.md](docs/rfc-text.md): draft Div APIs for text geometry,
-  editing input (EditContext), highlights, accessible text and measurement.
+- [docs/design.md](docs/design.md): packages → the platform features that
+  power them → what Div has, what is missing, owner and size; measurements;
+  the fidelity plan against the packages in Chromium.
+- [docs/rfc-text.md](docs/rfc-text.md): draft Div APIs for those platform
+  features (`contenteditable`, input events, Selection and Range, IME,
+  clipboard and drag and drop, observers, fast line rendering, accessible text).
 - [probes/tests](probes/tests): the headless probes behind the design.
 
 ## Running the probes

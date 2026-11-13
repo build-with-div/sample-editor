@@ -1,306 +1,338 @@
-# RFC draft: text geometry, editing input and text measurement for editors
+# RFC draft: the editing platform for Div
 
 Status: **draft from the sample-editor investigation**, for the Div tracks
-to accept, change or reject. Nothing here is implemented in Div. This
+to accept, change or reject. Nothing here is implemented in Div, and this
 sample does not patch or fork Div.
 
-Pinned Div: `565db46a`. Evidence: [design.md](design.md) and the probes in
-[`probes/tests`](../probes/tests).
+Pinned Div: `565db46a`. Evidence: [design.md](design.md) (sections 2 and 4)
+and the probes in [`probes/tests`](../probes/tests).
 
-## Summary
+## Principle
 
-A code editor (VS Code, Zed) or a rich-text editor needs six things from
-the UI framework that Div does not expose today:
+CodeMirror 6, Monaco, ProseMirror/TipTap and Lexical are built on a known
+set of web platform features. Div should implement those features, matched
+to Chromium's behaviour and pixels, and verified with Div's comparison
+harness and WPT. Then a Rust port of any of these packages works the way
+the package does in the browser. Div should not add an editor-specific
+primitive.
 
-1. **Text geometry**: the caret rectangle for a text offset, the
-   rectangles of a text range, and the text offset under a point.
-2. **Editing input on any element**: committed text, IME composition
-   with its caret and its clauses, and a way to place the IME candidate
-   window, delivered to an editor surface that is not a form control.
-3. **Range decoration without elements**: paint a selection, find matches
-   and syntax colours over existing text without splitting it into spans.
-4. **Layout that scales with what changed**, so a few hundred visible
-   lines re-lay out in a frame when one line changes.
-5. **Accessible text**: a screen reader can read the editor's text by
-   character, word and line, and follow the caret and selection.
-6. **Text measurement without a document**, for a canvas-drawn view such
-   as a minimap.
+The Rust surface uses typed handles and Rust types (`Element`, `TextNode`,
+`Range`, enums for `inputType`). Each call keeps the web method's
+semantics: the same algorithm, the same event order, and the same
+exceptions mapped to `Error` variants. Where the doc comment of a Rust
+method names its web counterpart, the Chromium behaviour of that
+counterpart is the specification.
 
-Div's rule for gaps is that the fix is the web platform feature that
-removes them, matched to Chromium. Each of 1–5 has a shipped web feature
-that Chromium implements, so this RFC proposes those, in Rust form:
+**Offsets.** The web counts DOM text offsets in UTF-16 code units. Div's
+existing Rust selection API counts UTF-8 bytes (`Element::selection`). This
+RFC keeps UTF-8 byte offsets in the Rust API, and the engine keeps the web
+model internally. Div's FFI facade converts to UTF-16 at its boundary. An
+offset that is not on a char boundary is an `Error`, as the web's
+`IndexSizeError` is for an offset past the end.
 
-| Need | Web feature (Chromium) | Proposal | Track | Size |
-| --- | --- | --- | --- | --- |
-| 1 | `Range.getClientRects()`, `document.caretPositionFromPoint()` | [A](#a-text-ranges-and-caret-from-point) | engine (layout), framework (divui) | M |
-| 2 | `EditContext` (Chromium 121) | [B](#b-editcontext) | framework (platform, divui); engine (focus) | L |
-| 3 | CSS Custom Highlight API, `::highlight()` (Chromium 105) | [C](#c-custom-highlights) | engine (style, paint); framework | M |
-| 4 | LayoutNG's cached, incremental layout; `content-visibility: auto` | [D](#d-incremental-layout) | engine (layout) | L |
-| 5 | Accessibility of editable text (UIA TextPattern, AT-SPI Text) | [E](#e-accessible-text) | engine (accessibility) | M |
-| 6 | Canvas `measureText()` (`TextMetrics`) | [F](#f-text-measurement) | engine (div-text); framework | M |
+| Section | Features (design.md numbering) | Owner | Size |
+| --- | --- | --- | --- |
+| [A](#a-editing-host-contenteditable-and-input-events) | 2 `contenteditable`, 3 `beforeinput`/`input` | engine (editing, layout, paint); framework (events) | L + M |
+| [B](#b-selection-and-range) | 4 Selection API and painting, 5 Range geometry, 6 caret from point | engine (editing, layout, paint); framework | L + M + M |
+| [C](#c-composition-and-ime) | 7 composition and IME; 20 `EditContext` later | framework (platform, events) | M (L for EditContext) |
+| [D](#d-clipboard-and-drag-and-drop) | 8 clipboard events and `DataTransfer`, 9 drag and drop | framework (platform, events) | M + M |
+| [E](#e-observers-and-frame-callbacks) | 10 `MutationObserver`, 11 `ResizeObserver`, 12 `IntersectionObserver`, 13 `requestAnimationFrame`, 19 `document.fonts` | engine (DOM, layout, text); framework | M + S–M + M + S + S |
+| [F](#f-fast-dom-line-rendering) | 16 layout that scales with what changed | engine (layout, text, paint) | L |
+| [G](#g-accessible-editable-text) | 17 UIA TextPattern / AT-SPI Text for editable content | engine (accessibility) | M |
 
-[G](#g-a-native-text-view-not-recommended-now) describes a Div-only
-text-view element, the approach Zed's GPUI takes, and why this RFC does
-not recommend it first.
-
-Offsets in every Rust API below are **UTF-8 byte offsets** into the text
-node's data, as `Element::selection` already uses. The web APIs count
-UTF-16 code units; Div's FFI facade converts at its boundary. div-text's
-`ShapeResult` counts Unicode scalar values today
-(`div-text/src/shaping/shaper.rs:150`), so the engine converts once, inside.
+Not drafted here:
+- 14, stylesheets and selectors: the engine track is already working on it.
+- 15, UI Events completeness: a list of small fixes in design.md.
+- 18, canvas 2D and `measureText`: designed by `sample-canvas`.
+- 21, `<textarea>` parity: Chromium's textarea is the specification.
 
 ---
 
-## A. Text ranges and caret from point
+## A. Editing host: `contenteditable` and input events
 
-**Today.** `Document::hit_test(x, y)` returns an `Element`
-(`divui/src/document.rs:861`). `Element::client_rects` and `bounding_rect`
-return element boxes (`divui/src/element.rs:807,815`). div-text has
-`ShapeResult::x_position_for_offset`, `offset_for_x_position` and
-`width_for_range` (`div-text/src/shaping/shape_result.rs:298,312,354`),
-but layout does not keep a text-offset map on its line fragments that
-app code can query, and divui re-exports none of it.
+**Today.** The `contenteditable` attribute only gives an empty block its
+caret line (`div-layout/src/block.rs:5107`). An element carrying it is not
+focusable (`focus()` returns `NotFocusable`), and typing into it changes
+nothing. `beforeinput`/`input` fire only for `<input>`/`<textarea>`
+(`divui/src/document.rs:1588`), with ten input types
+(`divui/src/events.rs:10-21`).
 
-**Proposal** (`divui`, mirroring DOM `Range` and `CaretPosition`):
+**Proposal.**
 
 ```rust
-/// A DOM Range over text nodes and elements.
-pub struct Range { /* start/end boundary points */ }
+impl Element {
+    /// `element.contentEditable = "true" | "plaintext-only" | "false"`.
+    /// An editing host is focusable, shows a caret, and edits its DOM
+    /// through the input event flow below.
+    pub fn set_content_editable(&self, mode: ContentEditable) -> Result<(), Error>;
+    pub fn is_content_editable(&self) -> Result<bool, Error>;
+}
+
+/// The full Input Events Level 2 `inputType` list (insertText,
+/// insertReplacementText, insertLineBreak, insertParagraph,
+/// insertCompositionText, insertFromPaste, insertFromDrop,
+/// deleteContentBackward/Forward, deleteWordBackward/Forward,
+/// deleteSoftLineBackward/Forward, deleteHardLineBackward/Forward,
+/// deleteByCut, deleteByDrag, historyUndo, historyRedo, format*, …).
+#[non_exhaustive]
+pub enum InputType { /* … */ }
+
+impl InputEventInfo {
+    pub fn input_type(&self) -> InputType;
+    pub fn data(&self) -> Option<&str>;
+    pub fn data_transfer(&self) -> Option<&DataTransfer>;   // paste and drop
+    /// `InputEvent.getTargetRanges()`: the static ranges the edit replaces.
+    pub fn target_ranges(&self) -> &[StaticRange];
+    pub fn is_composing(&self) -> bool;
+}
+```
+
+**Engine work.**
+- Editing commands over the DOM (insert text, split and merge blocks,
+  delete by unit), driven by the default action of `beforeinput`.
+  Lexical and CodeMirror cancel most of these and apply their own edits.
+  ProseMirror lets many through and reads the result with a
+  `MutationObserver` (E).
+- Caret painting in editing hosts (blink rate from the platform), and
+  `caret-color`.
+- Undo grouping for native edits (`historyUndo`/`historyRedo` as input
+  types).
+- Line and word movement by visual lines. This needs B's geometry.
+
+**Verify.** WPT `editing/` (contenteditable, `run/` command tests),
+`input-events/`. Harness screenshots of the caret and of edits in
+`white-space: pre` and `pre-wrap` hosts.
+
+## B. Selection and Range
+
+**Today.** Selection exists only inside form controls. Geometry exists
+only for element boxes (`divui/src/element.rs:807,815`).
+`Document::hit_test` is `elementFromPoint` (`document.rs:861`). div-text has
+`x_position_for_offset` and `offset_for_x_position`
+(`div-text/src/shaping/shape_result.rs:298,312`), but layout keeps no text
+offset map that can be queried.
+
+**Proposal.**
+
+```rust
+/// A live DOM Range (Range, StaticRange for input events).
+pub struct Range { /* … */ }
 
 impl Document {
     pub fn create_range(&self) -> Range;
-    /// `document.caretPositionFromPoint(x, y)`: the text node and offset
-    /// nearest the viewport point, or `None` outside any text.
+    /// `document.getSelection()`: the document's single Selection.
+    pub fn selection(&self) -> Selection;
+    /// `document.caretPositionFromPoint(x, y)`.
     pub fn caret_position_from_point(&self, x: f32, y: f32)
         -> Result<Option<CaretPosition>, Error>;
 }
 
-pub struct CaretPosition {
-    pub node: TextNode,
-    pub offset: usize, // UTF-8 bytes
-}
-
 impl Range {
-    pub fn set_start(&self, node: &TextNode, offset: usize) -> Result<(), Error>;
-    pub fn set_end(&self, node: &TextNode, offset: usize) -> Result<(), Error>;
-    /// `Range.getClientRects()`: one rect per line box fragment, viewport
-    /// coordinates. A collapsed range gives the caret rect (zero width,
-    /// line-box height), as Chromium does.
+    pub fn set_start(&self, node: &Node, offset: usize) -> Result<(), Error>;
+    pub fn set_end(&self, node: &Node, offset: usize) -> Result<(), Error>;
+    pub fn collapsed(&self) -> bool;
+    /// `Range.getClientRects()`: per line-box fragment, viewport coordinates;
+    /// a collapsed range in text gives the caret rect.
     pub fn client_rects(&self) -> Result<Vec<Rect>, Error>;
     pub fn bounding_rect(&self) -> Result<Option<Rect>, Error>;
 }
+
+impl Selection {
+    pub fn anchor(&self) -> Option<(Node, usize)>;
+    pub fn focus(&self) -> Option<(Node, usize)>;
+    pub fn range_count(&self) -> usize;
+    pub fn get_range_at(&self, index: usize) -> Result<Range, Error>;
+    pub fn collapse(&self, node: &Node, offset: usize) -> Result<(), Error>;
+    pub fn extend(&self, node: &Node, offset: usize) -> Result<(), Error>;
+    pub fn set_base_and_extent(&self, anchor: (&Node, usize), focus: (&Node, usize))
+        -> Result<(), Error>;
+    pub fn remove_all_ranges(&self);
+}
+// `selectionchange` fires on the Document, coalesced as in Chromium.
 ```
 
-**Engine work.** Inline layout keeps, per text fragment, the source text
-node, the byte range it covers and its `ShapeResult` (or enough of it to
-answer x-for-offset). `caretPositionFromPoint` walks the hit-test result
-to the line box and maps x with the existing `offset_for_x_position`,
-which needs a binary search instead of today's linear scan
-(`shape_result.rs:322-334`). Tab expansion rewrites tabs as spaces
-(`div-layout/src/inline/items_builder.rs:1232-1246`, `expand_tabs` at
-`:2154`); the offset map must count the source tab, not its spaces.
+`Node` is the common handle over `Element` and `TextNode` (which divui
+already has separately).
 
-**Chromium parity tests.** `getClientRects` and `caretPositionFromPoint`
-over LTR, RTL, mixed bidi, ligatures (a caret inside `fi`), tabs in
-`white-space: pre`, wrapped lines, and an empty line.
+**Engine work.**
+- Inline layout keeps, for each text fragment, its text node, its source
+  byte range and enough shaping data for x-for-offset. Offsets count
+  source characters, including tabs that layout rewrites as spaces
+  (`div-layout/src/inline/items_builder.rs:1232-1246`).
+- `offset_for_x_position` uses a binary search.
+- Selection painting: native highlight, `::selection` style, and
+  `user-select`.
+- Pointer selection: click, drag, double and triple click. These need
+  `MouseEvent.detail` (feature 15).
 
-## B. EditContext
+**Verify.** WPT `selection/`, `dom/ranges/`, `css/cssom-view/` (including
+`caretPositionFromPoint` and `getClientRects`). Harness screenshots of
+selections over LTR, RTL, mixed bidi, ligatures, tabs, wrapped lines and
+empty lines.
 
-**Today.** `beforeinput`, `input` and the composition events reach only
-`<input>` and `<textarea>`: `Document::dispatch_text_input` and
-`dispatch_composition_start` return early unless the focused element is an
-editable control (`divui/src/document.rs:1588,1629`). The probe
-`input_events::custom_surface_ime` confirms a focusable `div` receives
-none of them. The platform drops the preedit caret range
-(`Ime::Preedit(text, _)`, `div-platform/src/desktop.rs:687`), never calls
-winit's `Window::set_ime_cursor_area`, so the candidate window cannot
-follow the caret, and the commit `input` event has no `inputType`
-(`document.rs:1673,1692`).
+## C. Composition and IME
 
-**Proposal** (`divui`, mirroring the W3C EditContext API):
+**Today.** Composition events reach only form controls
+(`document.rs:1629`). The platform drops the preedit cursor
+(`Ime::Preedit(text, _)`, `div-platform/src/desktop.rs:687`) and never
+calls winit's `set_ime_cursor_area`. The `input` after a commit has no
+`inputType` (`document.rs:1673,1692`). No `input` fires during composition.
+
+**Proposal** (no new API for apps; it is the web's event flow):
+- Composition events and `beforeinput`/`input` with
+  `insertCompositionText` reach any focused editing host (A), in
+  Chromium's order: `compositionstart`, then
+  `beforeinput`/`compositionupdate`/`input` for each update, then
+  `compositionend`.
+- `CompositionEvent.data`, and the preedit selection kept from the
+  platform.
+- The platform places the candidate window at the caret's rect: B's
+  geometry for the focused selection, passed to `set_ime_cursor_area` after
+  each layout that moves it.
+- Later, **`EditContext`** (feature 20), which Monaco's newer input path
+  uses. It is the same flow with the app holding the text. It also gives
+  `characterboundsupdate` for the IME. It is drafted only once A–C exist,
+  since it shares their plumbing.
+
+**Verify.**
+- WPT `uievents/` composition tests.
+- Behavioural comparison with Chromium driven by CDP
+  `Input.imeSetComposition`.
+- A manual native check with the Windows IME and IBus/Fcitx on Linux,
+  recorded with a screenshot of the candidate window position.
+
+## D. Clipboard and drag and drop
+
+**Today.** Plain text only, through a private document clipboard synced
+around Ctrl+C/X/V (`div-platform/src/desktop.rs:924-949`). There are no
+`copy`/`cut`/`paste` events and no drag and drop.
+
+**Proposal.**
 
 ```rust
-pub struct EditContext { /* shared, Rc */ }
-
-impl EditContext {
-    pub fn new(document: &Document, init: EditContextInit) -> Self;
-    // The editor's view of its text near the caret, kept in sync by the app.
-    pub fn update_text(&self, range: std::ops::Range<usize>, text: &str);
-    pub fn update_selection(&self, start: usize, end: usize);
-    // Geometry the platform needs for the IME and accessibility.
-    pub fn update_control_bounds(&self, bounds: Rect);
-    pub fn update_selection_bounds(&self, bounds: Rect);
-    pub fn update_character_bounds(&self, first: usize, bounds: &[Rect]);
-    pub fn text(&self) -> String;
-    pub fn selection(&self) -> (usize, usize);
+/// `DataTransfer`: typed items. `text/plain`, `text/html` and custom
+/// web types (`web application/x-…`), as Chromium maps them to native formats.
+pub struct DataTransfer { /* … */ }
+impl DataTransfer {
+    pub fn get_data(&self, format: &str) -> Option<String>;
+    pub fn set_data(&self, format: &str, data: &str);
+    pub fn types(&self) -> Vec<String>;
+    pub fn set_drag_image(&self, element: &Element, x: f32, y: f32);
 }
-
-impl Element {
-    /// `element.editContext = ctx`. A focused element with an edit
-    /// context receives keyboard input as text and IME edits.
-    pub fn set_edit_context(&self, context: Option<&EditContext>) -> Result<(), Error>;
+impl Event {
+    /// `ClipboardEvent.clipboardData` and `DragEvent.dataTransfer`.
+    pub fn data_transfer(&self) -> Option<&DataTransfer>;
 }
 ```
 
-Events on the `EditContext` (via `on`, as `Element::on`):
+The events:
+- `copy`, `cut` and `paste` fire on the focused editing host or the
+  selection's container, and are cancelable, as in Chromium.
+- `dragstart`, `drag`, `dragenter`, `dragover`, `dragleave`, `drop` and
+  `dragend` fire with OS drag sources and targets: OLE on Windows, XDND
+  and Wayland data-device on Linux.
+- Native formats map like Chromium's: `CF_UNICODETEXT` and `CF_HTML` on
+  Windows; `text/plain;charset=utf-8` and `text/html` on Linux. Custom
+  types map like Chromium's web custom formats.
 
-- `textupdate`: `update_range`, `text`, `selection` (and composition range).
-- `textformatupdate`: per-clause underline style and thickness, so the
-  app draws IME clauses as the platform does.
-- `characterboundsupdate`: the range whose character rects the IME
-  wants; the app answers with `update_character_bounds`.
-- `compositionstart`, `compositionend`.
+**Verify.** WPT `clipboard-apis/`, `html/editing/dnd/`. A round trip with a
+native app (pasting HTML from a browser) checked manually.
 
-`beforeinput` still fires on the element for non-text intents
-(`deleteContentBackward`, `insertParagraph`, `historyUndo`), with
-`inputType`, so Backspace, Enter and Ctrl+Z map to editor commands
-through one path on every platform.
+## E. Observers and frame callbacks
 
-**Platform work.** Keep the preedit cursor; translate selection bounds to
-`set_ime_cursor_area` on each update; send `characterboundsupdate`
-requests. On Windows, winit 0.30 drives IMM32; reconversion and
-TSF-based input (and the text services that read the document) need TSF,
-which is a later step (L by itself).
+**Today.** None of these exist. Div has timers (`divui/src/task.rs:157-178`)
+and the platform redraw loop.
 
-**Why not `contenteditable`.** It makes the engine own the document model,
-which a code editor cannot accept for a 100k-line file, and its
-behaviour is the hardest part of the web platform to match. EditContext
-is the API Chromium added so that editors (VS Code's Monaco has an
-EditContext mode) keep their own model and view. A rich-text editor built
-on EditContext needs the same primitives as a code editor.
-
-## C. Custom highlights
-
-**Today.** Selection and syntax colours need one element per token. The
-built-in textarea paints no caret or selection at all
-(`div-paint/src/painter.rs:3816-3852`).
-
-**Proposal** (`divui`, mirroring the CSS Custom Highlight API):
+**Proposal.** Each follows its spec's timing in the event loop, as
+Chromium runs it. The Rust callbacks receive typed records.
 
 ```rust
-pub struct Highlight { /* a set of Ranges and a priority */ }
-
+pub struct MutationObserver;      // observe(target, MutationObserverInit), take_records, disconnect
+pub struct ResizeObserver;        // observe(element, box), entries with content/border box sizes
+pub struct IntersectionObserver;  // root, root_margin, thresholds; entries with ratios and rects
 impl Document {
-    /// `CSS.highlights.set(name, highlight)`.
-    pub fn set_highlight(&self, name: &str, highlight: Option<Highlight>) -> Result<(), Error>;
-}
-impl Element {
-    /// Style for `::highlight(name)` within this element's subtree:
-    /// color, background-color, text-decoration (the CSS-allowed subset).
-    pub fn set_highlight_style(&self, name: &str, style: &Style) -> Result<(), Error>;
+    /// `requestAnimationFrame`: runs before style, layout and paint of the next frame.
+    pub fn request_animation_frame(&self, f: impl FnOnce(f64) + 'static) -> FrameRequestId;
+    pub fn cancel_animation_frame(&self, id: FrameRequestId);
+    /// `document.fonts`: `ready`, and `loading`/`loadingdone` events.
+    pub fn fonts(&self) -> FontFaceSet;
 }
 ```
 
-Paint-only: a highlight change must mark paint dirty, not layout. With
-highlights, a line is one text node; tokens, selection, find matches and
-bracket pairs are ranges. That cuts the element count per visible line
-from ~20 to 1–2 (the probe lines average 9–17 spans).
+`MutationObserver` records come from the engine's DOM mutation points.
+Those include edits that A's editing host makes; ProseMirror and CM6 read
+exactly these. `ResizeObserver` and `IntersectionObserver` run after
+layout in the update-the-rendering steps.
 
-## D. Incremental layout
+**Verify.** WPT `dom/nodes/MutationObserver-*`, `resize-observer/`,
+`intersection-observer/`, `html/webappapis/update-rendering/`,
+`css/css-font-loading/`.
 
-**Today.** Any layout invalidation re-runs `block_layout` from the root
-and re-records paint for the whole tree (`div-engine/src/lib.rs:2605-2618,2659-2665`);
-`DirtyState` is a set of booleans (`lib.rs:310`). There is no shaping
-cache: each text item is reshaped on every layout
-(`div-layout/src/inline/items_builder.rs:290-312`). `content-visibility`
-is parsed but not used (`div-style/src/computed.rs:800`). Nested flex
-columns cost about 2.2x per level (sample-git gap 26, engine fix in
-progress).
+## F. Fast DOM line rendering
 
-**Proposal.** This is engine-internal and has no new API: per-subtree
-dirty bits and cached layout results (LayoutNG's model), a shaping cache
-keyed by (text, font, features, direction), and `content-visibility: auto`
-with `contain-intrinsic-size`. The editor's acceptance target, measured
-with the probes here: editing one line of a windowed 10,000-line
-document, then layout and paint, within one 60 Hz frame (16.7 ms) on the
-reference machine, in a release build.
+**Today, measured** (design.md section 4):
+- **Cost per box.** Layout costs about 0.2 ms per inline box in a block
+  container and about 2.7x that in a flex column.
+- **CM6-sized viewport.** About 1,900 boxes cost 272 ms per edit with
+  layout and paint, and 454 ms per scroll.
+- **Every change is whole-document.** Each change re-lays out from the
+  root and re-records paint for the whole tree
+  (`div-engine/src/lib.rs:2605-2618,2659-2665`).
+- **No caching.** Each text item is shaped again on every layout, and
+  again for intrinsic sizing (`div-layout/src/inline/items_builder.rs:290-312`).
+  Shaping itself is cheap (23 µs per 45-character line).
 
-## E. Accessible text
+**Proposal.** This is engine-internal and adds no API.
+1. Profile the per-box cost. The hypotheses are: font resolution per item
+   (`items_builder.rs:291-300`), double shaping, and repeated
+   `block_layout` passes (`lib.rs:2602-2648`).
+2. Add a shaping cache keyed by text, font, features and direction.
+3. Add per-subtree dirty bits, and cache layout results for clean
+   subtrees, as LayoutNG does. Then editing one `.cm-line` re-lays out
+   that line and its ancestors' block offsets.
+4. Re-record paint only for damaged subtrees, and limit damage to the
+   changed rect.
+5. Implement `content-visibility: auto` with `contain-intrinsic-size`
+   (parsed today, `div-style/src/computed.rs:800`, but unused).
 
-**Today** (AccessKit 0.25, `div-engine/src/accessibility.rs`):
-- a textarea is a `MultilineTextInput` with one synthetic `TextRun` child
-  holding the whole value (`:745-775`);
-- the run has `character_lengths` but no `character_positions`,
-  `character_widths` or `word_starts`, so per-character bounds and word
-  navigation are unavailable to AccessKit's UIA TextPattern and AT-SPI
-  Text adapters;
-- the text selection is set on the run, not on the control node AccessKit
-  reads it from (`:761` vs `:819-831`), so caret-moved and
-  selection-changed events do not fire (the probe
-  `input_events::textarea_accessibility_text` checks the control node has
-  no selection);
-- every layout or paint change rebuilds and diffs the whole semantic tree
+**Target.** The probe `window_flow_cost` with the 1000px margin must fit
+one edit plus layout plus paint within 16.7 ms on the reference machine.
+Chromium's time for the same page on the same machine, measured in phase
+2, is the reference. The nested-flex fix already in progress (sample-git
+gap 26) is part of this.
+
+## G. Accessible editable text
+
+**Today.**
+- **Selection on the wrong node.** AccessKit provides UIA TextPattern and
+  AT-SPI Text for text inputs, and it reads the selection from the input
+  node. Div sets the selection on the child run instead
+  (`div-engine/src/accessibility.rs:761` vs `:819-831`).
+- **Runs without positions.** Runs have no `character_positions`,
+  `character_widths` or `word_starts` (`:745-775`).
+- **Whole-tree rebuilds.** Every invalidation rebuilds the whole tree
   (`div-engine/src/lib.rs:2908-2911`).
 
 **Proposal.**
-1. Set `text_selection` on the text-input node (S, engine).
-2. Emit one `TextRun` per line box with `character_positions`,
-   `character_widths` and `word_starts` from the shaping results (M,
-   engine). Ordinary paragraphs then become readable by character too.
-3. An element with an `EditContext` is exposed as an editable text input
-   whose runs are its text nodes and whose selection is the context's
-   selection, so a custom editor gets TextPattern/AT-SPI Text without
-   app-side work (M, engine). Chromium's EditContext accessibility is
-   itself incomplete; Div should match what Chromium exposes and record
-   the difference.
-4. Rebuild only changed subtrees (part of D).
+1. Put `text_selection` on the text-input node (S).
+2. Emit a `TextRun` per line box with positions, widths and word starts
+   from layout (M). This uses the offset map from B.
+3. Expose an editing host (A) the way Chromium does: role, editable state,
+   its text runs, and the document Selection as the text selection (M).
+4. Rebuild only changed subtrees (part of F).
 
-## F. Text measurement
+**Verify.** Compare with Chromium's accessibility tree for the same page,
+from CDP `Accessibility.getFullAXTree`. Manual checks with NVDA (Windows)
+and Orca (Linux) reading by character, word and line, and following the
+caret.
 
-For views that draw text themselves (a minimap, a canvas-drawn editor,
-charts), and as the canvas 2D context's `measureText` (the
-`sample-canvas` investigation is designing the canvas API; this section
-is its text half):
+## Rejected alternatives
 
-```rust
-pub struct TextLayout { /* shaped runs of one line */ }
-
-impl TextLayout {
-    /// Shape `text` with the document's fonts and a computed-style-like
-    /// font description (family list, size, weight, features, tab size).
-    pub fn new(document: &Document, text: &str, font: &FontSpec) -> Result<Self, Error>;
-    pub fn width(&self) -> f32;
-    pub fn metrics(&self) -> LineMetrics;            // ascent, descent, line gap
-    pub fn x_for_offset(&self, offset: usize) -> f32; // caret x
-    pub fn offset_for_x(&self, x: f32) -> usize;      // hit test, grapheme-snapped
-    pub fn range_rects(&self, range: std::ops::Range<usize>) -> Vec<(f32, f32)>; // bidi-split
-}
-```
-
-It wraps `TextShaper`, `ShapeResult` and the document's `FontCollection`;
-offsets snap to grapheme cluster boundaries. Canvas `fillText` with a
-`TextLayout` draws the same glyphs. Re-exporting div-text's internals
-directly is not proposed: its offsets are scalar indices and its types
-change with the engine.
-
-## G. A native text view (not recommended now)
-
-The alternative is a Div-only element that takes a document model and
-draws only the visible lines itself, as Zed's GPUI editor element does:
-
-```rust
-pub trait TextSource {
-    fn line_count(&self) -> usize;
-    fn line(&self, index: usize) -> StyledLine; // text + style runs + decorations
-}
-pub struct TextView { /* element */ }
-impl TextView {
-    pub fn new(document: &Document, source: Rc<dyn TextSource>) -> Self;
-    pub fn invalidate_lines(&self, range: std::ops::Range<usize>);
-    pub fn caret_rect(&self, line: usize, offset: usize) -> Rect;
-    pub fn position_at(&self, x: f32, y: f32) -> (usize, usize);
-}
-```
-
-It is the fastest design and its scope is narrow (L in engine paint,
-layout and accessibility). It is not recommended first because:
-- it is not a web feature, so code ported from CodeMirror or Monaco does
-  not run on it and Chromium cannot be its oracle;
-- A–E are needed by other apps anyway (selection of ordinary text, find
-  in page, IME in any custom widget, accessible paragraphs), and with
-  them the DOM path can be fast enough once D lands;
-- it would need its own IME and accessibility plumbing, which B and E
-  provide for every element.
-
-Revisit G if, after D, the windowed-DOM probe cannot meet the frame
-target in section D.
+- **A Div-only text-view element**, as in Zed's GPUI. **Rejected:** it
+  does not port the packages, and Chromium cannot serve as its oracle. The
+  measured performance gap belongs in F.
+- **Exposing div-text's shaping types to apps.** **Rejected:** that is
+  not a web API; canvas `measureText` (feature 18) is the web API.
+- **A Div-specific EditContext before `contenteditable`.** **Rejected:**
+  three of the four packages need `contenteditable`, and the fourth uses a
+  `<textarea>` today.

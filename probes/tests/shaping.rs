@@ -1,6 +1,7 @@
-//! Probe: the cost of div-text's shaping primitives, which a text-view
-//! element (RFC section G) or a canvas `measureText` (section F) would call
-//! per visible line, and which layout calls per inline text item today.
+//! Probe: the cost of div-text's shaping primitives, which layout calls per
+//! inline text item today. It separates shaping from the rest of layout's
+//! per-box cost (design.md feature 16) and sizes what canvas `measureText`
+//! (feature 18) would pay per call.
 //!
 //! This uses div-text directly, which is engine-internal and not Div's
 //! public API; app code in this sample does not.

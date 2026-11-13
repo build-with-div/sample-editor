@@ -105,7 +105,7 @@ fn custom_surface_keyboard() {
     app.type_text("a");
     let typed = take(&log);
     println!("surface, type 'a': {typed:?}");
-    // div-gap: 2. No beforeinput/input on a non-control element.
+    // div-gap: 2. No beforeinput/input on a non-control element (no editing host).
     assert!(typed.iter().any(|e| e.starts_with("keydown key=Char('a')")));
     assert!(!typed
         .iter()
@@ -148,7 +148,7 @@ fn custom_surface_ime() {
     document.dispatch_text_input("x").unwrap();
     let events = take(&log);
     println!("surface, IME start/update/end + text input: {events:?}");
-    // div-gap: 2. Composition and text input never reach a custom surface.
+    // div-gap: 7. Composition and text input never reach a custom surface.
     assert!(events.is_empty());
 }
 
@@ -211,7 +211,7 @@ fn custom_surface_mouse() {
         "focus after clicking the child span of a tabindex div: {}",
         surface.has_focus().unwrap()
     );
-    // div-gap: 5. No dblclick and no click count; no pointer* from headless mouse.
+    // div-gap: 15. No dblclick and no click count; no pointer* from headless mouse.
     assert!(!second.iter().any(|e| e.starts_with("dblclick")));
 
     for kind in [MouseEventType::Down, MouseEventType::Up] {
@@ -221,11 +221,11 @@ fn custom_surface_mouse() {
     }
     let right = take(&log);
     println!("surface, right click: {right:?}");
-    // div-gap: 5. A right-button press fires `click` and no `contextmenu`
+    // div-gap: 15. A right-button press fires `click` and no `contextmenu`
     // (Chromium fires `auxclick` and `contextmenu`, no `click`).
     assert!(right.iter().any(|e| e.starts_with("click")));
     assert!(!right.iter().any(|e| e.starts_with("contextmenu")));
-    // div-gap: 5. Pressing on a child does not focus the focusable ancestor.
+    // div-gap: 15. Pressing on a child does not focus the focusable ancestor.
     assert!(!surface.has_focus().unwrap());
 }
 
@@ -254,7 +254,7 @@ fn textarea_accessibility_text() {
                 node.value(),
                 node.text_selection().is_some()
             );
-            // div-gap: 9. AccessKit reads the selection from the control.
+            // div-gap: 17. AccessKit reads the selection from the control.
             assert!(node.text_selection().is_none());
         }
         if role == AccessibilityRole::TextRun {
@@ -270,4 +270,42 @@ fn textarea_accessibility_text() {
         }
     }
     assert!(saw_run, "the textarea exposes a text run");
+}
+
+/// `contenteditable`, the editing host CodeMirror 6, ProseMirror and Lexical
+/// are built on: today the attribute does not make an element editable.
+#[test]
+fn contenteditable_host() {
+    let ids = create_signal(None::<Element>);
+    let mut app = TestApp::new(LogicalSize::new(400.0, 200.0)).mount(move || {
+        let document = current_document();
+        let host = Element::create(&document, "div").unwrap();
+        host.set_attribute("contenteditable", "true").unwrap();
+        host.apply_style(&style! { width: 300px; height: 100px; white-space: pre-wrap })
+            .unwrap();
+        let line = Element::create(&document, "div").unwrap();
+        line.set_text("hello").unwrap();
+        host.append_child(&line).unwrap();
+        ids.set(Some(host.clone()));
+        ViewNode::Element(host)
+    });
+    let host = ids.get().unwrap();
+    let log: Log = Rc::default();
+    record(&host, &log);
+    // div-gap: 2. Chromium makes an editing host focusable; Div refuses to
+    // focus it without a tabindex.
+    let focus_result = host.focus();
+    println!("contenteditable without tabindex: focus() -> {focus_result:?}");
+    assert!(focus_result.is_err() || !host.has_focus().unwrap());
+    host.set_attribute("tabindex", "0").unwrap();
+    host.focus().unwrap();
+    app.type_text("x");
+    let events = take(&log);
+    println!(
+        "contenteditable with tabindex: events on typing {events:?}, text after typing {:?}",
+        host.text_content().unwrap()
+    );
+    // div-gap: 2. No editing host: no beforeinput, no edit.
+    assert!(!events.iter().any(|e| e.starts_with("beforeinput")));
+    assert_eq!(host.text_content().unwrap(), "hello");
 }

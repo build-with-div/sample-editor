@@ -6,7 +6,7 @@
 //! - `window`: only the lines in view (plus a margin) exist, positioned
 //!   absolutely in a tall spacer; scrolling re-renders the window.
 //! - `flex3`: `all` inside three nested flex columns, as an app shell would
-//!   place the editor (div-gap: 6, Div's nested-flex layout cost).
+//!   place the editor (div-gap: 16, Div's layout cost).
 //!
 //! `cargo test -p editor-probes --test line_elements -- --nocapture`
 //! (`PROBE_SCALE=full` for 2,000 and 10,000 lines).
@@ -345,7 +345,7 @@ fn flow_line(document: &Document, n: usize, content: LineContent) -> Element {
 
 /// The configuration a prototype can use today: block containers only, the
 /// visible lines in normal flow between two spacers, rebuilt on scroll.
-fn window_flow(lines: usize, content: LineContent) {
+fn window_flow(lines: usize, content: LineContent, margin_px: f32) {
     let host = create_signal(None::<Element>);
     let mut app = TestApp::new(LogicalSize::new(800.0, VIEW_HEIGHT as f64)).mount(move || {
         let document = current_document();
@@ -361,7 +361,7 @@ fn window_flow(lines: usize, content: LineContent) {
     });
     let scroller = host.get().unwrap();
     let document = app.document().clone();
-    let visible = (VIEW_HEIGHT / LINE_HEIGHT) as usize + 10;
+    let visible = ((VIEW_HEIGHT + 2.0 * margin_px) / LINE_HEIGHT) as usize + 10;
     let render_window = |first: usize| {
         scroller.remove_all_children().unwrap();
         let last = (first + visible).min(lines);
@@ -427,7 +427,7 @@ fn window_flow(lines: usize, content: LineContent) {
         })
         .sum();
     println!(
-        "flow window {lines:>6} lines, {content:?} ({spans} inline boxes in view): build {}, \
+        "flow window {lines:>6} lines, margin {margin_px}px, {content:?} ({spans} inline boxes): build {}, \
          layout {}, paint {}, edit one line + layout + paint {}, scroll to middle {}",
         ms(build),
         ms(layout),
@@ -445,6 +445,9 @@ fn window_flow_cost() {
         LineContent::Grouped,
         LineContent::Tokens,
     ] {
-        window_flow(lines, content);
+        window_flow(lines, content, 0.0);
     }
+    // CodeMirror 6 renders the visible lines plus a margin of about 1000px
+    // above and below (its viewport margin), each line a span per token.
+    window_flow(lines, LineContent::Tokens, 1000.0);
 }
