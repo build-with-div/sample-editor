@@ -1,0 +1,8 @@
+# The Skia build profile of Div's CI, as `div new` writes it. Div's pixels
+# depend on how Skia is compiled. Variables already set in the environment
+# take precedence. Linux CI also sets CC/CXX/CLANGCC/CLANGCXX to clang.
+[env]
+FORCE_SKIA_BUILD = '1'
+SKIA_GN_ARGS = 'extra_cflags += [ "-DSK_SUPPORT_LEGACY_CONIC_CHOP", "-DSK_ENABLE_LEGACY_SHADERCONTEXT", "-DSK_USE_FREETYPE_EMBOLDEN", "-DSK_GAMMA_EXPONENT=1.2", "-DSK_GAMMA_CONTRAST=0.2", "-USK_GAMMA_APPLY_TO_A8", "-fno-strict-aliasing", "-msse3" ]'
+SKIA_NINJA_COMMAND = 'ninja'
+RUST_MIN_STACK = '4194304'

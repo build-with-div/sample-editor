@@ -1,0 +1,15 @@
+[package]
+name = "editor-probes"
+version = "0.0.0"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish = false
+description = "Probes of what Div offers a text and code editor (sample-editor phase 1)"
+
+[dependencies]
+divui = { workspace = true, features = ["testing"] }
+
+[dev-dependencies]
+div-text.workspace = true
+div-style.workspace = true

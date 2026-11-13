@@ -1,0 +1,100 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# The Skia build variables of Div's CI (rust-parity and windows-msvc), which
+# .cargo/config.toml also sets for local builds.
+env:
+  CARGO_TERM_COLOR: always
+  FORCE_SKIA_BUILD: "1"
+  PYTHONUTF8: "1"
+  RUST_MIN_STACK: "4194304"
+  SKIA_GN_ARGS: >-
+    extra_cflags += [ "-DSK_SUPPORT_LEGACY_CONIC_CHOP",
+    "-DSK_ENABLE_LEGACY_SHADERCONTEXT",
+    "-DSK_USE_FREETYPE_EMBOLDEN", "-DSK_GAMMA_EXPONENT=1.2",
+    "-DSK_GAMMA_CONTRAST=0.2", "-USK_GAMMA_APPLY_TO_A8", "-fno-strict-aliasing", "-msse3" ]
+  SKIA_NINJA_COMMAND: ninja
+
+jobs:
+  build-test:
+    name: build-test (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-2025]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 120
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Enable long paths before checkout
+        if: runner.os == 'Windows'
+        run: git config --global core.longpaths true
+
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Linux build dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends \
+            build-essential clang libclang-18-dev libfontconfig1-dev \
+            libfreetype-dev libgl1-mesa-dev libwayland-dev libx11-dev \
+            libx11-xcb-dev libxcb1-dev libxkbcommon-dev ninja-build \
+            pkg-config python3
+          {
+            echo "LIBCLANG_PATH=/usr/lib/llvm-18/lib"
+            echo "CC=clang"
+            echo "CXX=clang++"
+            echo "CLANGCC=clang"
+            echo "CLANGCXX=clang++"
+          } >> "$GITHUB_ENV"
+
+      - name: Install Windows build dependencies
+        if: runner.os == 'Windows'
+        run: |
+          python -m pip install ninja==1.13.0
+          echo 'LIBCLANG_PATH=C:\Program Files\LLVM\bin' >> "$GITHUB_ENV"
+          echo "CARGO_TARGET_DIR=${GITHUB_WORKSPACE}\\out\\cargo" >> "$GITHUB_ENV"
+
+      # The toolchain comes from rust-toolchain.toml.
+      - name: Install Rust
+        run: rustup show active-toolchain || rustup toolchain install
+
+      - uses: actions/cache@v5
+        with:
+          path: |
+            ~/.cargo/git
+            ~/.cargo/registry
+            target
+            out/cargo
+          key: build-test-v1-${{ runner.os }}-${{ hashFiles('rust-toolchain.toml', 'Cargo.lock') }}
+          restore-keys: build-test-v1-${{ runner.os }}-
+
+      - name: Check formatting
+        run: cargo fmt --all --check
+
+      - name: Clippy
+        run: cargo clippy --locked --all-targets -- -D warnings
+
+      # The probes run at small sizes here; their timings are not compared.
+      # docs/design.md reports PROBE_SCALE=full runs on a named machine.
+      - name: Test
+        run: cargo test --locked -- --nocapture
