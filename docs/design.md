@@ -60,6 +60,14 @@ API call from their published source, so the matrix becomes a checked list
 
 ## 2. The Div work list
 
+The owners below follow the platform decisions the user accepted on
+13 Nov 2026 (`platform-plan/decisions-2026-11-13.md`): this sample's
+`Range`/`Selection`/`StaticRange` model is adopted for the engine
+(decision 6), `contenteditable` comes before `EditContext` (decision 11),
+one `DataTransfer` serves clipboard and drag (decision 7), and runtime CSS
+is ingestion of third-party sheets and runtime custom properties now, with
+runtime sheet insertion later (decision 2).
+
 This is the platform Div must implement faithfully for these packages. Each
 row has a Chromium oracle and a way to verify it: Div's comparison harness
 (pinned Chromium 147), WPT, or both. Owner tracks: **engine** (div-style,
@@ -72,23 +80,23 @@ div-platform, div-macros, div-cli), **components** (div-components). Size:
 | 1 | (packaging) a fresh app lockfile builds on Linux | **Missing**: zbus pins incomplete (sample-git gap 24) | framework | S | CI of a fresh `div new` app |
 | 2 | `contenteditable` editing host | **Missing**: the attribute only affects an empty block's caret line (`div-layout/src/block.rs:5107`); probe `contenteditable_host`: not focusable without `tabindex`, and typing fires no `beforeinput` and changes nothing | engine (editing, layout, paint); framework | L | WPT `editing/`, `contenteditable`; harness screenshots of caret and selection |
 | 3 | `beforeinput`/`input`, full `inputType`, `getTargetRanges()` | **Partial**: only on `<input>`/`<textarea>` (`divui/src/document.rs:1588`); 10 input types (`divui/src/events.rs:10-21`); the commit after a composition has none (`document.rs:1673,1692`) | framework (events); engine | M | WPT `input-events/` |
-| 4 | Selection API, selection painting, `::selection`, `caret-color`, `user-select` | **Missing** for documents; only form-control selection with `select`/`selectionchange` on the control (`document.rs:464`) | engine (editing, paint); framework | L | WPT `selection/`; harness screenshots |
-| 5 | Range API geometry | **Missing**: element boxes only (`divui/src/element.rs:807,815`); div-text has the primitives but they are internal (`div-text/src/shaping/shape_result.rs:298,312,354`) | engine (layout); framework | M | WPT `dom/ranges/`, `css/cssom-view/` |
-| 6 | `caretPositionFromPoint` / `caretRangeFromPoint` | **Missing**; `Document::hit_test` (`elementFromPoint`) exists (`document.rs:861`) | engine (layout, hit test); framework | M | WPT `css/cssom-view/caretPositionFromPoint*` |
+| 4 | Selection API, selection painting, `::selection`, `caret-color`, `user-select` | **Missing** for documents; only form-control selection with `select`/`selectionchange` on the control (`document.rs:464`) | engine (decision 6) | L | WPT `selection/`; harness screenshots |
+| 5 | Range API geometry | **Missing**: element boxes only (`divui/src/element.rs:807,815`); div-text has the primitives but they are internal (`div-text/src/shaping/shape_result.rs:298,312,354`) | engine (decision 6) | M | WPT `dom/ranges/`, `css/cssom-view/` |
+| 6 | `caretPositionFromPoint` / `caretRangeFromPoint` | **Missing**; `Document::hit_test` (`elementFromPoint`) exists (`document.rs:861`) | engine (decision 6) | M | WPT `css/cssom-view/caretPositionFromPoint*` |
 | 7 | Composition events and IME | **Partial**: composition events only on form controls (`document.rs:1629`); the preedit cursor is dropped (`div-platform/src/desktop.rs:687`); `set_ime_cursor_area` is never called, so the candidate window cannot follow the caret; no `input` during composition | framework (platform, events) | M | WPT `uievents/`, scripted IME in Chromium via CDP `Input.imeSetComposition`; native manual check |
-| 8 | Clipboard events and `DataTransfer` | **Missing**: no `copy`/`cut`/`paste` events; the clipboard is plain text only (`divui/src/clipboard.rs:35-59`, `div-platform/src/windows_clipboard.rs`) | framework (platform, events) | M | WPT `clipboard-apis/` |
-| 9 | Drag and drop | **Missing** | framework (platform, events); engine (hit test) | M | WPT `html/editing/dnd/` |
+| 8 | Clipboard events and `DataTransfer` (one type with 9, decision 7) | **Missing**: no `copy`/`cut`/`paste` events; the clipboard is plain text only (`divui/src/clipboard.rs:35-59`, `div-platform/src/windows_clipboard.rs`) | framework, with the engine | M | WPT `clipboard-apis/` |
+| 9 | Drag and drop (the same `DataTransfer`; files as `File` wrapping paths) | **Missing** | framework, with the engine | M | WPT `html/editing/dnd/` |
 | 10 | `MutationObserver` | **Missing** | engine (DOM); framework | M | WPT `dom/nodes/MutationObserver-*` |
-| 11 | `ResizeObserver` | **Missing** | engine (layout); framework | S–M | WPT `resize-observer/` |
+| 11 | `ResizeObserver` (one API, three boxes; Tier 0) | **Missing** | engine (layout); framework | S–M | WPT `resize-observer/` |
 | 12 | `IntersectionObserver` | **Missing** | engine (layout); framework | M | WPT `intersection-observer/` |
-| 13 | `requestAnimationFrame` | **Missing**; only timers (`divui/src/task.rs:157-178`) and the platform redraw loop | framework | S | WPT `html/webappapis/update-rendering/` |
-| 14 | Stylesheets, selectors, pseudo-classes and pseudo-elements, custom properties, `@keyframes` | **Missing** (inline styles only); in progress on the engine track | engine (style) | L | harness, WPT `css/` |
+| 13 | `requestAnimationFrame` (per document, typed handle; Tier 0) | **Missing**; only timers (`divui/src/task.rs:157-178`) and the platform redraw loop | framework | S | WPT `html/webappapis/update-rendering/` |
+| 14 | 14a stylesheets, selectors, pseudo-classes and pseudo-elements, custom properties, `@keyframes` (Tier 0), with the browser-compatible ingestion mode for third-party sheets and runtime custom properties (decision 2); 14b runtime `<style>` element text, which style-mod uses for a document root; 14c `insertRule` and adopted sheets, for shadow roots (decision 2's later step) | **Missing** (inline styles only); 14a in progress on the engine track | engine (style); framework (14b/14c API) | L + S–M + M | harness, WPT `css/`, `css/cssom/` |
 | 15 | UI Events completeness | **Partial**: no `detail`/`dblclick`; a right press fires `click` and no `contextmenu`/`auxclick`; a press on a child does not focus the focusable ancestor; no `pointer*` from headless input; `Key` has no `Insert`, `code` or modifier keys (`divui/src/keyboard.rs:11-33`) | framework (events) | S–M | WPT `uievents/`, `pointerevents/` |
 | 16 | Fast DOM line rendering | **Too slow, measured** (section 4): ~0.2 ms per inline box per layout; whole-document relayout and repaint per change (`div-engine/src/lib.rs:2605-2618,2659-2665`); no shaping cache (`div-layout/src/inline/items_builder.rs:290-312`); nested flex ~2.7x per level | engine (layout, text) | L | the probes here, against Chromium timings on the same machine |
 | 17 | Accessible editable text | **Partial**: AccessKit gives UIA TextPattern / AT-SPI Text to text inputs, but Div sets the selection on the run, not the control (`div-engine/src/accessibility.rs:761` vs `:819-831`); runs have no character positions or word starts (`:745-775`); `contenteditable` content is not exposed as editable text | engine (accessibility) | M | Chromium's accessibility tree for the same page (CDP `Accessibility.getFullAXTree`); manual NVDA/Orca |
 | 18 | Canvas 2D, `measureText` | **Missing** (`<canvas>` is a placeholder, `div-paint/src/painter.rs:6331`); `sample-canvas` is designing it | engine (paint, text); framework | L | harness |
 | 19 | `document.fonts` | **Missing**: `Document::register_font_face` exists (`document.rs:712`), with no load events | engine (text); framework | S | WPT `css/css-font-loading/` |
-| 20 | `EditContext` | **Missing** | framework (platform, events); engine | L | WPT `editing/edit-context/` |
+| 20 | `EditContext` (after 2, decision 11) | **Missing** | framework (platform, events); engine | L | WPT `editing/edit-context/` |
 | 21 | `<textarea>` parity | **Partial**: no caret, selection or composition paint (`div-paint/src/painter.rs:3816-3852`), content does not scroll, Up/Down do nothing, undo puts the caret at the end, O(document) work per keystroke (section 4) | engine (forms, paint) | M | harness, WPT `html/semantics/forms/the-textarea-element/` |
 
 Priority for the code editor, CM6 first: **16** (without it the DOM
@@ -349,7 +357,7 @@ while Div implements the features. Each is labelled in code with
 | A visually hidden `<textarea>` receives text and IME in place of the `contenteditable` host | 2, 3, 7 | `contenteditable` with `beforeinput`/composition events |
 | Selection and caret drawn by the port's layers, with no native selection | 4 | Selection API and selection painting |
 | Caret and hit-test geometry from a measured monospace cell: x = column × cell. Wrong for wide characters, emoji, ligatures, proportional fonts and bidi | 5, 6 | `Range.getClientRects`, `caretPositionFromPoint` |
-| Inline styles generated from CM6's theme rules | 14 | Stylesheets and selectors |
+| Inline styles generated from CM6's theme rules | 14 | 14a stylesheets with the ingestion mode, then 14b: style-mod's `<style>` text used as is |
 | Viewport recomputed from `scroll` events and timers | 11, 12, 13 | `ResizeObserver`, `IntersectionObserver`, `requestAnimationFrame` |
 | The editor kept in a block-only subtree; tokens of the same colour merged into one span | 16 | Fast DOM line rendering |
 | Double and triple click timed by the app | 15 | `MouseEvent.detail`, `dblclick` |
@@ -373,7 +381,7 @@ one focused PR, merged before the next. Upstream: `@codemirror/state`
 | M3 | `RangeSet` and `RangeValue`: the storage for decorations, gutter markers and folds | state `rangeset.ts` | nothing |
 | M4 | History and the default commands and keymap, on state alone | commands | nothing |
 | M5 | Fidelity tooling: the pinned packages, the reference-capture page and the line-rendering benchmark in Chromium 147 (section 5 step 1, section 4) | view, state | Div's harness tooling (Chromium in WSL) |
-| M6 | View, static: `.cm-editor`, `.cm-scroller`, `.cm-content`, `.cm-line`, the viewport with gap spacers, mark/widget/line/replace decorations, gutters and line numbers, the theme; structural and pixel diffs against M5's captures | view `docview`, `viewport`, `decoration`, `gutter`, `theme` | 14 (Tier 0 stylesheets; inline styles as `div-gap: 14` until then), 16 (Tier 0 per-box cost) |
+| M6 | View, static: `.cm-editor`, `.cm-scroller`, `.cm-content`, `.cm-line`, the viewport with gap spacers, mark/widget/line/replace decorations, gutters and line numbers, the theme; structural and pixel diffs against M5's captures | view `docview`, `viewport`, `decoration`, `gutter`, `theme` | 14a (Tier 0 stylesheets) and 14b (runtime `<style>` text), with inline styles as `div-gap: 14` until then; 16 (Tier 0 per-box cost) |
 | M7 | View, interactive on labelled scaffolding: cursor and selection layers, `posAtCoords`/`coordsAtPos`, keymap through `w3c-keyname`, text through the input proxy, scrolling, the measure cycle | view `input`, `cursor`, `layer`, `keymap` | 2–7 (`div-gap` scaffolding), 11 and 13 (Tier 0) |
 | M8 | Language and features: highlighting, search, bracket matching, multiple selections, folding, each with behavioural fidelity | language, search, autocomplete | as M7 |
 
