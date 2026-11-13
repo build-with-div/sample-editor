@@ -1,0 +1,43 @@
+[workspace]
+resolver = "2"
+members = ["probes"]
+
+[workspace.package]
+edition = "2021"
+rust-version = "1.94"
+license = "Apache-2.0"
+
+# Div is pinned to one commit. Bump every `rev` below together, deliberately,
+# when a framework fix this sample needs lands.
+# div-gap: 1. Cargo.lock is seeded from Div's own lock; a fresh resolve picks
+# zbus_macros 5.19 beside zbus 5.13, which does not build on Linux.
+[workspace.dependencies]
+divui = { git = "https://github.com/build-with-div/div", rev = "565db46aa393d29a471973036d1c93d103e3a17a" }
+# Internal engine crates, used only by the shaping probe to measure what a
+# text-view or canvas approach would pay. Not public API; not for app code.
+div-text = { git = "https://github.com/build-with-div/div", rev = "565db46aa393d29a471973036d1c93d103e3a17a" }
+div-style = { git = "https://github.com/build-with-div/div", rev = "565db46aa393d29a471973036d1c93d103e3a17a" }
+
+# The framework's dependency patches, which Cargo does not apply to
+# dependents. Keep them equal to the pinned Div workspace's.
+[patch.crates-io]
+skia-safe = { git = "https://github.com/rust-skia/rust-skia.git", rev = "a31b86ba3b767344d39af3b8c30043003d8fc991" }
+skia-bindings = { git = "https://github.com/rust-skia/rust-skia.git", rev = "a31b86ba3b767344d39af3b8c30043003d8fc991" }
+skrifa = { git = "https://github.com/build-with-div/div", rev = "565db46aa393d29a471973036d1c93d103e3a17a" }
+read-fonts = { git = "https://github.com/build-with-div/div", rev = "565db46aa393d29a471973036d1c93d103e3a17a" }
+font-types = { git = "https://github.com/build-with-div/div", rev = "565db46aa393d29a471973036d1c93d103e3a17a" }
+bytemuck = { git = "https://github.com/build-with-div/div", rev = "565db46aa393d29a471973036d1c93d103e3a17a" }
+bytemuck_derive = { git = "https://github.com/build-with-div/div", rev = "565db46aa393d29a471973036d1c93d103e3a17a" }
+zbus_xml = { git = "https://github.com/build-with-div/div", rev = "565db46aa393d29a471973036d1c93d103e3a17a" }
+
+# The framework runs optimized while the sample stays fast to rebuild.
+[profile.dev.package."*"]
+opt-level = 2
+
+# On Linux, rust-skia compiles Skia at this package's opt-level, which is
+# part of the rendering configuration. Keep it equal in every profile.
+[profile.dev.package.skia-bindings]
+opt-level = 3
+
+[profile.release.package.skia-bindings]
+opt-level = 3
