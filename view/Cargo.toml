@@ -1,0 +1,11 @@
+[package]
+name = "editor-view"
+version = "0.0.0"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish = false
+description = "Port of @codemirror/view 6.43.15 (decorations and the height map so far) to Rust"
+
+[dependencies]
+editor-state = { path = "../state" }
