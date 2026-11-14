@@ -1,0 +1,18 @@
+{
+  "name": "sample-editor-reference",
+  "private": true,
+  "description": "Builds the Chromium reference page for the CodeMirror 6 fidelity cases",
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs"
+  },
+  "dependencies": {
+    "@codemirror/commands": "6.11.1",
+    "@codemirror/state": "6.7.6",
+    "@codemirror/view": "6.43.15",
+    "geist": "1.9.2"
+  },
+  "devDependencies": {
+    "esbuild": "0.25.12"
+  }
+}

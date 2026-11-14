@@ -1,0 +1,49 @@
+{
+ "chromium": "147.0.7727.50",
+ "viewport": {
+  "width": 800,
+  "height": 600,
+  "deviceScaleFactor": 1
+ },
+ "packages": {
+  "@codemirror/state": "6.7.6",
+  "@codemirror/view": "6.43.15",
+  "@codemirror/commands": "6.11.1",
+  "style-mod": "4.1.4",
+  "w3c-keyname": "2.2.8",
+  "crelt": "1.0.7",
+  "geist": "1.9.2",
+  "esbuild": "0.25.12"
+ },
+ "div_tooling": "92ea25a0756dd3e22aa57266ae5ead49a1ff9d8f",
+ "cases": {
+  "plain": {
+   "chromium.png": "f9942430c7a7e397512fa4edc136be285949c5a4ed0a82623f8869a9ae19d773",
+   "editor.html": "55e7cadcad1db457fb5f5eb21e3db8b5453e682cfa3285b38bcb39659714489d",
+   "styles.css": "dd7d8d9b1a73074f2900e70fec6cee4b8dc5f906228a886c37609e33df72bc45",
+   "ax.json": "088e31f63f9ffdad46da0f6f1de03a79f3571ce791ad6204d61b66e446ef9ea7",
+   "case.json": "48fb4e2b67b9df6ec96661931392bdf2dfc45d18d71621e1c09beaa54a73fbc3"
+  },
+  "gutter": {
+   "chromium.png": "56a3567aa41e4a4a3c959ec7de7507cf2ddacbe93f004623b2e5883b0207cabc",
+   "editor.html": "82a0e89d1451557d54100c9faec43975b7a96fb0a0b84ab750b49fa57cc937f4",
+   "styles.css": "dd7d8d9b1a73074f2900e70fec6cee4b8dc5f906228a886c37609e33df72bc45",
+   "ax.json": "5e5f10663a26aae0e1516d709181d8d676d0007d338189a0a7a40984e036d2fe",
+   "case.json": "2c7207906b32f4127f2c32d78e44b2086d5cf728e7791eb95e446eb24d866d2a"
+  },
+  "decorations": {
+   "chromium.png": "f85b7c1a8890ec52a8792eecd85f99abbd8eaab0c0e79eb76d23b4fa7cd4e78f",
+   "editor.html": "119d4d49851c11fdefcb8c78ec247b7544e5944620f0ed9bb3b4ffdf1e9b0c10",
+   "styles.css": "dd7d8d9b1a73074f2900e70fec6cee4b8dc5f906228a886c37609e33df72bc45",
+   "ax.json": "b7cd25b7c5bcd9bcc52c7fdf8767c9b4e20709fae2574b3839475b552b289fc3",
+   "case.json": "05650168a8a40dacda0775043752a6c52056d0afe46140ea1796759621514232"
+  },
+  "scrolled": {
+   "chromium.png": "9ab094d997e9360f286ce453bd0e921e070523263ff6be17a4ee4b0e933e16ff",
+   "editor.html": "4ab7e1e295575771ecc84c1758532ada8b69729986f35fec8a4cc926650f6014",
+   "styles.css": "dd7d8d9b1a73074f2900e70fec6cee4b8dc5f906228a886c37609e33df72bc45",
+   "ax.json": "bb4466bc7016d9e7f9636a95ddd4514862d35e36e857d73b6b3f331eb3edf7ba",
+   "case.json": "712844243e335dd7f60427494d690d67735e93c2f210047e8e7ca5b6b80de92b"
+  }
+ }
+}

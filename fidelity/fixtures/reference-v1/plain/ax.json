@@ -1,0 +1,925 @@
+{
+ "role": "RootWebArea",
+ "name": "CodeMirror 6 reference",
+ "properties": {
+  "focusable": true,
+  "url": "editor.html#plain"
+ },
+ "children": [
+  {
+   "role": "none",
+   "ignored": true,
+   "children": [
+    {
+     "role": "none",
+     "ignored": true,
+     "children": [
+      {
+       "role": "generic",
+       "children": [
+        {
+         "role": "generic",
+         "properties": {
+          "atomic": false,
+          "live": "polite",
+          "relevant": "additions text"
+         }
+        },
+        {
+         "role": "generic",
+         "properties": {
+          "focusable": true
+         },
+         "children": [
+          {
+           "role": "textbox",
+           "value": "fn let_0(match: usize) -> usize {\n    let let = value.get(1).unwrap_or(0);\n        // self pub line 2\n            match::Some(&mut self, \"3\")\n}\n    fn None_5(impl: usize) -> usize {\n        let None = fn.get(6).unwrap_or(0);\n            // pub self line 7\nimpl::return(&mut self, \"8\")\n    }\n        fn let_10(match: usize) -> usize {\n            let let = value.get(11).unwrap_or(0);\n// self pub line 12\n    match::Some(&mut self, \"13\")\n        }\n            fn None_15(impl: usize) -> usize {\nlet None = fn.get(16).unwrap_or(0);\n    // pub self line 17\n        impl::return(&mut self, \"18\")\n            }\nfn let_20(match: usize) -> usize {\n    let let = value.get(21).unwrap_or(0);\n        // self pub line 22\n            match::Some(&mut self, \"23\")\n}\n    fn None_25(impl: usize) -> usize {\n        let None = fn.get(26).unwrap_or(0);\n            // pub self line 27\nimpl::return(&mut self, \"28\")\n    }\n        fn let_30(match: usize) -> usize {\n            let let = value.get(31).unwrap_or(0);\n// self pub line 32\n    match::Some(&mut self, \"33\")\n        }\n            fn None_35(impl: usize) -> usize {",
+           "properties": {
+            "editable": "plaintext",
+            "focusable": true,
+            "multiline": true,
+            "readonly": false,
+            "required": false,
+            "settable": true
+           },
+           "children": [
+            {
+             "role": "generic",
+             "properties": {
+              "editable": "plaintext"
+             },
+             "children": [
+              {
+               "role": "StaticText",
+               "name": "fn let_0(match: usize) -> usize {",
+               "properties": {
+                "editable": "plaintext"
+               },
+               "children": [
+                {
+                 "role": "InlineTextBox",
+                 "name": "fn let_0(match: usize) -> usize {",
+                 "properties": {
+                  "editable": "plaintext"
+                 }
+                }
+               ]
+              }
+             ]
+            },
+            {
+             "role": "generic",
+             "properties": {
+              "editable": "plaintext"
+             },
+             "children": [
+              {
+               "role": "StaticText",
+               "name": "    let let = value.get(1).unwrap_or(0);",
+               "properties": {
+                "editable": "plaintext"
+               },
+               "children": [
+                {
+                 "role": "InlineTextBox",
+                 "name": "    let let = value.get(1).unwrap_or(0);",
+                 "properties": {
+                  "editable": "plaintext"
+                 }
+                }
+               ]
+              }
+             ]
+            },
+            {
+             "role": "generic",
+             "properties": {
+              "editable": "plaintext"
+             },
+             "children": [
+              {
+               "role": "StaticText",
+               "name": "        // self pub line 2",
+               "properties": {
+                "editable": "plaintext"
+               },
+               "children": [
+                {
+                 "role": "InlineTextBox",
+                 "name": "        // self pub line 2",
+                 "properties": {
+                  "editable": "plaintext"
+                 }
+                }
+               ]
+              }
+             ]
+            },
+            {
+             "role": "generic",
+             "properties": {
+              "editable": "plaintext"
+             },
+             "children": [
+              {
+               "role": "StaticText",
+               "name": "            match::Some(&mut self, \"3\")",
+               "properties": {
+                "editable": "plaintext"
+               },
+               "children": [
+                {
+                 "role": "InlineTextBox",
+                 "name": "            match::Some(&mut self, \"3\")",
+                 "properties": {
+                  "editable": "plaintext"
+                 }
+                }
+               ]
+              }
+             ]
+            },
+            {
+             "role": "generic",
+             "properties": {
+              "editable": "plaintext"
+             },
+             "children": [
+              {
+               "role": "StaticText",
+               "name": "}",
+               "properties": {
+                "editable": "plaintext"
+               },
+               "children": [
+                {
+                 "role": "InlineTextBox",
+                 "name": "}",
+                 "properties": {
+                  "editable": "plaintext"
+                 }
+                }
+               ]
+              }
+             ]
+            },
+            {
+             "role": "generic",
+             "properties": {
+              "editable": "plaintext"
+             },
+             "children": [
+              {
+               "role": "StaticText",
+               "name": "    fn None_5(impl: usize) -> usize {",
+               "properties": {
+                "editable": "plaintext"
+               },
+               "children": [
+                {
+                 "role": "InlineTextBox",
+                 "name": "    fn None_5(impl: usize) -> usize {",
+                 "properties": {
+                  "editable": "plaintext"
+                 }
+                }
+               ]
+              }
+             ]
+            },
+            {
+             "role": "generic",
+             "properties": {
+              "editable": "plaintext"
+             },
+             "children": [
+              {
+               "role": "StaticText",
+               "name": "        let None = fn.get(6).unwrap_or(0);",
+               "properties": {
+                "editable": "plaintext"
+               },
+               "children": [
+                {
+                 "role": "InlineTextBox",
+                 "name": "        let None = fn.get(6).unwrap_or(0);",
+                 "properties": {
+                  "editable": "plaintext"
+                 }
+                }
+               ]
+              }
+             ]
+            },
+            {
+             "role": "generic",
+             "properties": {
+              "editable": "plaintext"
+             },
+             "children": [
+              {
+               "role": "StaticText",
+               "name": "            // pub self line 7",
+               "properties": {
+                "editable": "plaintext"
+               },
+               "children": [
+                {
+                 "role": "InlineTextBox",
+                 "name": "            // pub self line 7",
+                 "properties": {
+                  "editable": "plaintext"
+                 }
+                }
+               ]
+              }
+             ]
+            },
+            {
+             "role": "generic",
+             "properties": {
+              "editable": "plaintext"
+             },
+             "children": [
+              {
+               "role": "StaticText",
+               "name": "impl::return(&mut self, \"8\")",
+               "properties": {
+                "editable": "plaintext"
+               },
+               "children": [
+                {
+                 "role": "InlineTextBox",
+                 "name": "impl::return(&mut self, \"8\")",
+                 "properties": {
+                  "editable": "plaintext"
+                 }
+                }
+               ]
+              }
+             ]
+            },
+            {
+             "role": "generic",
+             "properties": {
+              "editable": "plaintext"
+             },
+             "children": [
+              {
+               "role": "StaticText",
+               "name": "    }",
+               "properties": {
+                "editable": "plaintext"
+               },
+               "children": [
+                {
+                 "role": "InlineTextBox",
+                 "name": "    }",
+                 "properties": {
+                  "editable": "plaintext"
+                 }
+                }
+               ]
+              }
+             ]
+            },
+            {
+             "role": "generic",
+             "properties": {
+              "editable": "plaintext"
+             },
+             "children": [
+              {
+               "role": "StaticText",
+               "name": "        fn let_10(match: usize) -> usize {",
+               "properties": {
+                "editable": "plaintext"
+               },
+               "children": [
+                {
+                 "role": "InlineTextBox",
+                 "name": "        fn let_10(match: usize) -> usize {",
+                 "properties": {
+                  "editable": "plaintext"
+                 }
+                }
+               ]
+              }
+             ]
+            },
+            {
+             "role": "generic",
+             "properties": {
+              "editable": "plaintext"
+             },
+             "children": [
+              {
+               "role": "StaticText",
+               "name": "            let let = value.get(11).unwrap_or(0);",
+               "properties": {
+                "editable": "plaintext"
+               },
+               "children": [
+                {
+                 "role": "InlineTextBox",
+                 "name": "            let let = value.get(11).unwrap_or(0);",
+                 "properties": {
+                  "editable": "plaintext"
+                 }
+                }
+               ]
+              }
+             ]
+            },
+            {
+             "role": "generic",
+             "properties": {
+              "editable": "plaintext"
+             },
+             "children": [
+              {
+               "role": "StaticText",
+               "name": "// self pub line 12",
+               "properties": {
+                "editable": "plaintext"
+               },
+               "children": [
+                {
+                 "role": "InlineTextBox",
+                 "name": "// self pub line 12",
+                 "properties": {
+                  "editable": "plaintext"
+                 }
+                }
+               ]
+              }
+             ]
+            },
+            {
+             "role": "generic",
+             "properties": {
+              "editable": "plaintext"
+             },
+             "children": [
+              {
+               "role": "StaticText",
+               "name": "    match::Some(&mut self, \"13\")",
+               "properties": {
+                "editable": "plaintext"
+               },
+               "children": [
+                {
+                 "role": "InlineTextBox",
+                 "name": "    match::Some(&mut self, \"13\")",
+                 "properties": {
+                  "editable": "plaintext"
+                 }
+                }
+               ]
+              }
+             ]
+            },
+            {
+             "role": "generic",
+             "properties": {
+              "editable": "plaintext"
+             },
+             "children": [
+              {
+               "role": "StaticText",
+               "name": "        }",
+               "properties": {
+                "editable": "plaintext"
+               },
+               "children": [
+                {
+                 "role": "InlineTextBox",
+                 "name": "        }",
+                 "properties": {
+                  "editable": "plaintext"
+                 }
+                }
+               ]
+              }
+             ]
+            },
+            {
+             "role": "generic",
+             "properties": {
+              "editable": "plaintext"
+             },
+             "children": [
+              {
+               "role": "StaticText",
+               "name": "            fn None_15(impl: usize) -> usize {",
+               "properties": {
+                "editable": "plaintext"
+               },
+               "children": [
+                {
+                 "role": "InlineTextBox",
+                 "name": "            fn None_15(impl: usize) -> usize {",
+                 "properties": {
+                  "editable": "plaintext"
+                 }
+                }
+               ]
+              }
+             ]
+            },
+            {
+             "role": "generic",
+             "properties": {
+              "editable": "plaintext"
+             },
+             "children": [
+              {
+               "role": "StaticText",
+               "name": "let None = fn.get(16).unwrap_or(0);",
+               "properties": {
+                "editable": "plaintext"
+               },
+               "children": [
+                {
+                 "role": "InlineTextBox",
+                 "name": "let None = fn.get(16).unwrap_or(0);",
+                 "properties": {
+                  "editable": "plaintext"
+                 }
+                }
+               ]
+              }
+             ]
+            },
+            {
+             "role": "generic",
+             "properties": {
+              "editable": "plaintext"
+             },
+             "children": [
+              {
+               "role": "StaticText",
+               "name": "    // pub self line 17",
+               "properties": {
+                "editable": "plaintext"
+               },
+               "children": [
+                {
+                 "role": "InlineTextBox",
+                 "name": "    // pub self line 17",
+                 "properties": {
+                  "editable": "plaintext"
+                 }
+                }
+               ]
+              }
+             ]
+            },
+            {
+             "role": "generic",
+             "properties": {
+              "editable": "plaintext"
+             },
+             "children": [
+              {
+               "role": "StaticText",
+               "name": "        impl::return(&mut self, \"18\")",
+               "properties": {
+                "editable": "plaintext"
+               },
+               "children": [
+                {
+                 "role": "InlineTextBox",
+                 "name": "        impl::return(&mut self, \"18\")",
+                 "properties": {
+                  "editable": "plaintext"
+                 }
+                }
+               ]
+              }
+             ]
+            },
+            {
+             "role": "generic",
+             "properties": {
+              "editable": "plaintext"
+             },
+             "children": [
+              {
+               "role": "StaticText",
+               "name": "            }",
+               "properties": {
+                "editable": "plaintext"
+               },
+               "children": [
+                {
+                 "role": "InlineTextBox",
+                 "name": "            }",
+                 "properties": {
+                  "editable": "plaintext"
+                 }
+                }
+               ]
+              }
+             ]
+            },
+            {
+             "role": "generic",
+             "properties": {
+              "editable": "plaintext"
+             },
+             "children": [
+              {
+               "role": "StaticText",
+               "name": "fn let_20(match: usize) -> usize {",
+               "properties": {
+                "editable": "plaintext"
+               },
+               "children": [
+                {
+                 "role": "InlineTextBox",
+                 "name": "fn let_20(match: usize) -> usize {",
+                 "properties": {
+                  "editable": "plaintext"
+                 }
+                }
+               ]
+              }
+             ]
+            },
+            {
+             "role": "generic",
+             "properties": {
+              "editable": "plaintext"
+             },
+             "children": [
+              {
+               "role": "StaticText",
+               "name": "    let let = value.get(21).unwrap_or(0);",
+               "properties": {
+                "editable": "plaintext"
+               },
+               "children": [
+                {
+                 "role": "InlineTextBox",
+                 "name": "    let let = value.get(21).unwrap_or(0);",
+                 "properties": {
+                  "editable": "plaintext"
+                 }
+                }
+               ]
+              }
+             ]
+            },
+            {
+             "role": "generic",
+             "properties": {
+              "editable": "plaintext"
+             },
+             "children": [
+              {
+               "role": "StaticText",
+               "name": "        // self pub line 22",
+               "properties": {
+                "editable": "plaintext"
+               },
+               "children": [
+                {
+                 "role": "InlineTextBox",
+                 "name": "        // self pub line 22",
+                 "properties": {
+                  "editable": "plaintext"
+                 }
+                }
+               ]
+              }
+             ]
+            },
+            {
+             "role": "generic",
+             "properties": {
+              "editable": "plaintext"
+             },
+             "children": [
+              {
+               "role": "StaticText",
+               "name": "            match::Some(&mut self, \"23\")",
+               "properties": {
+                "editable": "plaintext"
+               },
+               "children": [
+                {
+                 "role": "InlineTextBox",
+                 "name": "            match::Some(&mut self, \"23\")",
+                 "properties": {
+                  "editable": "plaintext"
+                 }
+                }
+               ]
+              }
+             ]
+            },
+            {
+             "role": "generic",
+             "properties": {
+              "editable": "plaintext"
+             },
+             "children": [
+              {
+               "role": "StaticText",
+               "name": "}",
+               "properties": {
+                "editable": "plaintext"
+               },
+               "children": [
+                {
+                 "role": "InlineTextBox",
+                 "name": "}",
+                 "properties": {
+                  "editable": "plaintext"
+                 }
+                }
+               ]
+              }
+             ]
+            },
+            {
+             "role": "generic",
+             "properties": {
+              "editable": "plaintext"
+             },
+             "children": [
+              {
+               "role": "StaticText",
+               "name": "    fn None_25(impl: usize) -> usize {",
+               "properties": {
+                "editable": "plaintext"
+               },
+               "children": [
+                {
+                 "role": "InlineTextBox",
+                 "name": "    fn None_25(impl: usize) -> usize {",
+                 "properties": {
+                  "editable": "plaintext"
+                 }
+                }
+               ]
+              }
+             ]
+            },
+            {
+             "role": "generic",
+             "properties": {
+              "editable": "plaintext"
+             },
+             "children": [
+              {
+               "role": "StaticText",
+               "name": "        let None = fn.get(26).unwrap_or(0);",
+               "properties": {
+                "editable": "plaintext"
+               },
+               "children": [
+                {
+                 "role": "InlineTextBox",
+                 "name": "        let None = fn.get(26).unwrap_or(0);",
+                 "properties": {
+                  "editable": "plaintext"
+                 }
+                }
+               ]
+              }
+             ]
+            },
+            {
+             "role": "generic",
+             "properties": {
+              "editable": "plaintext"
+             },
+             "children": [
+              {
+               "role": "StaticText",
+               "name": "            // pub self line 27",
+               "properties": {
+                "editable": "plaintext"
+               },
+               "children": [
+                {
+                 "role": "InlineTextBox",
+                 "name": "            // pub self line 27",
+                 "properties": {
+                  "editable": "plaintext"
+                 }
+                }
+               ]
+              }
+             ]
+            },
+            {
+             "role": "generic",
+             "properties": {
+              "editable": "plaintext"
+             },
+             "children": [
+              {
+               "role": "StaticText",
+               "name": "impl::return(&mut self, \"28\")",
+               "properties": {
+                "editable": "plaintext"
+               },
+               "children": [
+                {
+                 "role": "InlineTextBox",
+                 "name": "impl::return(&mut self, \"28\")",
+                 "properties": {
+                  "editable": "plaintext"
+                 }
+                }
+               ]
+              }
+             ]
+            },
+            {
+             "role": "generic",
+             "properties": {
+              "editable": "plaintext"
+             },
+             "children": [
+              {
+               "role": "StaticText",
+               "name": "    }",
+               "properties": {
+                "editable": "plaintext"
+               },
+               "children": [
+                {
+                 "role": "InlineTextBox",
+                 "name": "    }",
+                 "properties": {
+                  "editable": "plaintext"
+                 }
+                }
+               ]
+              }
+             ]
+            },
+            {
+             "role": "generic",
+             "properties": {
+              "editable": "plaintext"
+             },
+             "children": [
+              {
+               "role": "StaticText",
+               "name": "        fn let_30(match: usize) -> usize {",
+               "properties": {
+                "editable": "plaintext"
+               },
+               "children": [
+                {
+                 "role": "InlineTextBox",
+                 "name": "        fn let_30(match: usize) -> usize {",
+                 "properties": {
+                  "editable": "plaintext"
+                 }
+                }
+               ]
+              }
+             ]
+            },
+            {
+             "role": "generic",
+             "properties": {
+              "editable": "plaintext"
+             },
+             "children": [
+              {
+               "role": "StaticText",
+               "name": "            let let = value.get(31).unwrap_or(0);",
+               "properties": {
+                "editable": "plaintext"
+               },
+               "children": [
+                {
+                 "role": "InlineTextBox",
+                 "name": "            let let = value.get(31).unwrap_or(0);",
+                 "properties": {
+                  "editable": "plaintext"
+                 }
+                }
+               ]
+              }
+             ]
+            },
+            {
+             "role": "generic",
+             "properties": {
+              "editable": "plaintext"
+             },
+             "children": [
+              {
+               "role": "StaticText",
+               "name": "// self pub line 32",
+               "properties": {
+                "editable": "plaintext"
+               },
+               "children": [
+                {
+                 "role": "InlineTextBox",
+                 "name": "// self pub line 32",
+                 "properties": {
+                  "editable": "plaintext"
+                 }
+                }
+               ]
+              }
+             ]
+            },
+            {
+             "role": "generic",
+             "properties": {
+              "editable": "plaintext"
+             },
+             "children": [
+              {
+               "role": "StaticText",
+               "name": "    match::Some(&mut self, \"33\")",
+               "properties": {
+                "editable": "plaintext"
+               },
+               "children": [
+                {
+                 "role": "InlineTextBox",
+                 "name": "    match::Some(&mut self, \"33\")",
+                 "properties": {
+                  "editable": "plaintext"
+                 }
+                }
+               ]
+              }
+             ]
+            },
+            {
+             "role": "generic",
+             "properties": {
+              "editable": "plaintext"
+             },
+             "children": [
+              {
+               "role": "StaticText",
+               "name": "        }",
+               "properties": {
+                "editable": "plaintext"
+               },
+               "children": [
+                {
+                 "role": "InlineTextBox",
+                 "name": "        }",
+                 "properties": {
+                  "editable": "plaintext"
+                 }
+                }
+               ]
+              }
+             ]
+            },
+            {
+             "role": "generic",
+             "properties": {
+              "editable": "plaintext"
+             },
+             "children": [
+              {
+               "role": "StaticText",
+               "name": "            fn None_35(impl: usize) -> usize {",
+               "properties": {
+                "editable": "plaintext"
+               },
+               "children": [
+                {
+                 "role": "InlineTextBox",
+                 "name": "            fn None_35(impl: usize) -> usize {",
+                 "properties": {
+                  "editable": "plaintext"
+                 }
+                }
+               ]
+              }
+             ]
+            },
+            {
+             "role": "none",
+             "ignored": true
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}
