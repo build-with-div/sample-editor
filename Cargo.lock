@@ -362,6 +362,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "editor-commands"
+version = "0.0.0"
+dependencies = [
+ "editor-state",
+]
+
+[[package]]
 name = "editor-probes"
 version = "0.0.0"
 dependencies = [

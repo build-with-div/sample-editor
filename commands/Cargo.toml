@@ -1,0 +1,11 @@
+[package]
+name = "editor-commands"
+version = "0.0.0"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish = false
+description = "Port of @codemirror/commands 6.11.1 (undo history) to Rust"
+
+[dependencies]
+editor-state = { path = "../state" }
