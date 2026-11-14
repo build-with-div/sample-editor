@@ -1,7 +1,7 @@
 //! Port of `attributes.ts`: DOM attribute sets for decorations.
 //!
-//! `setAttrs`, `updateAttrs` and `getAttrs` write to and read from DOM
-//! elements; they come with the view's DOM.
+//! `setAttrs`, which writes a set to an element, is in the `dom` module;
+//! `updateAttrs` and `getAttrs` come with the editor view.
 
 /// A set of DOM attributes (`Attrs`), in the order they were added, as a
 /// JavaScript object keeps its string keys.

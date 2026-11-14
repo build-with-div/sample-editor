@@ -7,13 +7,15 @@
 //! [`LineSpec`]; the extra properties upstream allows on a spec go in
 //! their `extra` field.
 //!
-//! [`WidgetType`] has the methods that need no DOM. `toDOM`, `updateDOM`,
-//! `ignoreEvent`, `coordsAt` and `destroy` come with the view's DOM.
+//! [`WidgetType`] builds its DOM on Div's (`toDOM`, `updateDOM`,
+//! `destroy`); `ignoreEvent` and `coordsAt` come with the view's event
+//! handling and measurement.
 
 use std::any::Any;
 use std::fmt;
 use std::sync::{Arc, LazyLock};
 
+use div::{Document, Element};
 use editor_state::{MapMode, Range, RangeError, RangeSet, RangeValue};
 
 use crate::attributes::{attrs_eq, combine_attrs, Attrs};
@@ -27,6 +29,24 @@ pub type SpecData = Arc<dyn Any + Send + Sync>;
 /// this delays building the widget's DOM until it is needed, and avoids
 /// redrawing a widget when its decoration is recreated.
 pub trait WidgetType: Any + Send + Sync {
+    /// Build the widget's DOM (`toDOM`). Upstream passes the editor view;
+    /// until the view is ported, this gets the document to build in.
+    fn to_dom(&self, document: &Document) -> Result<Element, div::Error>;
+
+    /// Update `dom`, drawn by `from`, a widget of the same type, to show
+    /// this widget instead (`updateDOM`). Returns whether it did; the
+    /// default returns `false`, so the widget is drawn anew.
+    fn update_dom(&self, _dom: &Element, _document: &Document, _from: &Self) -> bool
+    where
+        Self: Sized,
+    {
+        false
+    }
+
+    /// Called when the widget's DOM is removed from the editor
+    /// (`destroy`).
+    fn destroy(&self, _dom: &Element) {}
+
     /// Compare with another widget of the same type (`eq`). Used to avoid
     /// redrawing a widget when it is replaced by an equal one. The default
     /// returns `false`, so new instances are always redrawn.
@@ -71,6 +91,9 @@ trait DynWidget: Send + Sync {
     fn is_hidden(&self) -> bool;
     fn editable(&self) -> bool;
     fn type_name(&self) -> &'static str;
+    fn to_dom(&self, document: &Document) -> Result<Element, div::Error>;
+    fn update_dom(&self, dom: &Element, document: &Document, from: &dyn DynWidget) -> bool;
+    fn destroy(&self, dom: &Element);
 }
 
 impl<W: WidgetType> DynWidget for W {
@@ -104,6 +127,20 @@ impl<W: WidgetType> DynWidget for W {
 
     fn type_name(&self) -> &'static str {
         std::any::type_name::<W>()
+    }
+
+    fn to_dom(&self, document: &Document) -> Result<Element, div::Error> {
+        WidgetType::to_dom(self, document)
+    }
+
+    fn update_dom(&self, dom: &Element, document: &Document, from: &dyn DynWidget) -> bool {
+        from.as_any()
+            .downcast_ref::<W>()
+            .is_some_and(|from| WidgetType::update_dom(self, dom, document, from))
+    }
+
+    fn destroy(&self, dom: &Element) {
+        WidgetType::destroy(self, dom)
     }
 }
 
@@ -146,6 +183,29 @@ impl Widget {
     #[doc(hidden)]
     pub fn editable(&self) -> bool {
         self.0.editable()
+    }
+
+    /// Whether both share one instance (upstream's `==` on widgets).
+    pub(crate) fn ptr_eq(&self, other: &Widget) -> bool {
+        std::ptr::addr_eq(Arc::as_ptr(&self.0), Arc::as_ptr(&other.0))
+    }
+
+    /// Whether both are of one type (`a.constructor == b.constructor`).
+    pub(crate) fn same_type(&self, other: &Widget) -> bool {
+        self.0.as_any().type_id() == other.0.as_any().type_id()
+    }
+
+    pub(crate) fn to_dom(&self, document: &Document) -> Result<Element, div::Error> {
+        self.0.to_dom(document)
+    }
+
+    /// `updateDOM` for `from`, which must be of this widget's type.
+    pub(crate) fn update_dom(&self, dom: &Element, document: &Document, from: &Widget) -> bool {
+        self.0.update_dom(dom, document, &*from.0)
+    }
+
+    pub(crate) fn destroy(&self, dom: &Element) {
+        self.0.destroy(dom)
     }
 }
 

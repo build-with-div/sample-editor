@@ -2,6 +2,8 @@
 
 use std::sync::Arc;
 
+use div::{Document, Element};
+
 use editor_state::{Range, Text};
 use editor_view::__test::{
     clear_height_change_flag, height_change_flag, HeightMap, HeightOracle, MeasuredHeights,
@@ -42,6 +44,10 @@ fn text_of(lines: &[&str]) -> Text {
 struct MyWidget(f64);
 
 impl WidgetType for MyWidget {
+    fn to_dom(&self, document: &Document) -> Result<Element, div::Error> {
+        Element::create(document, "span")
+    }
+
     fn eq(&self, other: &Self) -> bool {
         self.0 == other.0
     }
@@ -53,7 +59,11 @@ impl WidgetType for MyWidget {
 
 struct NoHeightWidget;
 
-impl WidgetType for NoHeightWidget {}
+impl WidgetType for NoHeightWidget {
+    fn to_dom(&self, document: &Document) -> Result<Element, div::Error> {
+        Element::create(document, "span")
+    }
+}
 
 fn widget(height: f64, side: i32, block: bool) -> Arc<Decoration> {
     Decoration::widget(WidgetSpec {
