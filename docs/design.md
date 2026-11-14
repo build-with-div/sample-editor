@@ -385,6 +385,19 @@ one focused PR, merged before the next. Upstream: `@codemirror/state`
 | M7 | View, interactive on labelled scaffolding: cursor and selection layers, `posAtCoords`/`coordsAtPos`, keymap through `w3c-keyname`, text through the input proxy, scrolling, the measure cycle | view `input`, `cursor`, `layer`, `keymap` | 2–7 (`div-gap` scaffolding), 11 and 13 (Tier 0) |
 | M8 | Language and features: highlighting, search, bracket matching, multiple selections, folding, each with behavioural fidelity | language, search, autocomplete | as M7 |
 
+Progress:
+- M1 merged in sample-editor#2.
+- M2 ports `facet.ts`, `state.ts`, `extension.ts`, `transaction.ts`,
+  `char.ts`, `column.ts` and `charcategory.ts`, with `test-facet.ts`,
+  `test-state.ts` and `test-charcategory.ts`, and `ChangeSet.filter`,
+  left out of M1. `findClusterBreak` comes from `@marijn/find-cluster-break`
+  1.0.4, ported as a module of `editor-state` with its test. Two parts are
+  not ported yet: `EditorState.toJSON`/`fromJSON` with the field
+  serializers (upstream's JSON test is skipped until a feature needs them;
+  `Text`, `ChangeSet` and `EditorSelection` JSON are ported), and
+  `combineConfig`, which merges untyped config objects; the packages that
+  use it get typed config structs when they are ported.
+
 Every milestone after M5 runs the fidelity checks in section 5 and reports
 measured numbers. The highlighter (M8) follows CM6's design, a parse tree
 mapped to `@lezer/highlight` tags; whether the tree comes from a port of

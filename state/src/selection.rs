@@ -148,6 +148,20 @@ impl SelectionRange {
     }
 }
 
+/// Fail when a range of `selection` ends past `doc_len`
+/// (`checkSelection`).
+pub(crate) fn check_selection(
+    selection: &EditorSelection,
+    doc_len: usize,
+) -> Result<(), RangeError> {
+    if selection.ranges.iter().any(|r| r.to() > doc_len) {
+        return Err(RangeError(
+            "Selection points outside of document".to_string(),
+        ));
+    }
+    Ok(())
+}
+
 /// A selection: one or more ranges, sorted and not overlapping, with one
 /// main range.
 #[derive(Debug, Clone, PartialEq)]

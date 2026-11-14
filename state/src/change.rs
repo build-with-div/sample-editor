@@ -271,6 +271,24 @@ pub enum Insertion {
     Text(Text),
 }
 
+impl From<&str> for Insertion {
+    fn from(text: &str) -> Insertion {
+        Insertion::Str(text.to_string())
+    }
+}
+
+impl From<String> for Insertion {
+    fn from(text: String) -> Insertion {
+        Insertion::Str(text)
+    }
+}
+
+impl From<Text> for Insertion {
+    fn from(text: Text) -> Insertion {
+        Insertion::Text(text)
+    }
+}
+
 /// One plain change: a deletion, insertion or replacement.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Change {
@@ -549,6 +567,69 @@ impl ChangeSet {
             }
         }
         ChangeSet::create_set(sections, inserted)
+    }
+
+    /// Split the changes into those outside `ranges` (given as `from, to`
+    /// pairs), which are kept, and a description of those inside them,
+    /// which are filtered out (`filter`, internal upstream).
+    pub(crate) fn filter(&self, ranges: &[usize]) -> (ChangeSet, ChangeDesc) {
+        let mut result_sections = Vec::new();
+        let mut result_inserted = Vec::new();
+        let mut filtered_sections = Vec::new();
+        let mut iter = SectionIter::new(&self.desc.sections, Some(&self.inserted));
+        let mut i = 0;
+        let mut pos: isize = 0;
+        'done: loop {
+            let next = if i >= ranges.len() {
+                isize::MAX
+            } else {
+                i += 1;
+                ranges[i - 1] as isize
+            };
+            while pos < next || pos == next && iter.len == 0 {
+                if iter.done() {
+                    break 'done;
+                }
+                let len = iter.len.min(next - pos);
+                add_section(&mut filtered_sections, len, -1, false);
+                let ins = if iter.ins == -1 {
+                    -1
+                } else if iter.off == 0 {
+                    iter.ins
+                } else {
+                    0
+                };
+                add_section(&mut result_sections, len, ins, false);
+                if ins > 0 {
+                    add_insert(&mut result_inserted, &result_sections, &iter.text());
+                }
+                iter.forward(len);
+                pos += len;
+            }
+            let end = ranges.get(i).map_or(pos, |&end| end as isize);
+            i += 1;
+            while pos < end {
+                if iter.done() {
+                    break 'done;
+                }
+                let len = iter.len.min(end - pos);
+                add_section(&mut result_sections, len, -1, false);
+                let ins = if iter.ins == -1 {
+                    -1
+                } else if iter.off == 0 {
+                    iter.ins
+                } else {
+                    0
+                };
+                add_section(&mut filtered_sections, len, ins, false);
+                iter.forward(len);
+                pos += len;
+            }
+        }
+        (
+            ChangeSet::create_set(result_sections, result_inserted),
+            ChangeDesc::create(filtered_sections),
+        )
     }
 
     /// Create a change set for `changes` in a document of `length`,
