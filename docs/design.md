@@ -544,6 +544,24 @@ Progress:
     plus paint takes 1.79 ms in Chromium against 272 ms in Div.
   - Per inline box, Chromium's layout costs about 1.4 µs against Div's
     260 µs, measured the same way.
+- M6, first part: a new `editor-view` crate with the parts of
+  `@codemirror/view` that need no DOM.
+  - `decoration.ts`: `Decoration` (mark, widget, replace, line),
+    `WidgetType`, `BlockWrapper`, with upstream's sides, map modes,
+    equality and range validation.
+  - `attributes.ts`: attribute sets that keep insertion order, as a
+    JavaScript object keeps its keys.
+  - `heightmap.ts`: the height map behind the viewport and the gap
+    spacers, with `test-heightmap.ts` (24 cases).
+  - `ChangedRange` and `Direction`.
+  - Upstream tests decorations only in the browser
+    (`webtest-draw-decoration.ts`), so port-specific tests check the
+    parts that need no DOM against upstream's source.
+  - Height-map nodes are owned (`Box`), not shared, so the methods that
+    rebuild part of the tree take it by value. Upstream's identity check
+    for a replaced node compares the node kinds.
+  - The widget methods that build DOM come with the view's DOM in the next
+    part.
 
 Every milestone after M5 runs the fidelity checks in section 5 and reports
 measured numbers. The highlighter (M8) follows CM6's design, a parse tree
