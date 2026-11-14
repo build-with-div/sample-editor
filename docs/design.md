@@ -407,11 +407,21 @@ Progress:
   makes reading the first chunk's values throw, to prove the comparison
   skips the shared chunk; Rust has no property traps, so the port checks
   the reported ranges only.
-- M4, first part: the undo history (`history.ts` with `test-history.ts`)
+- M4, first part (merged in sample-editor#6): the undo history (`history.ts` with `test-history.ts`)
   in a new `editor-commands` crate. `historyKeymap` and the `historyUndo`/
   `historyRedo` input handler wait for the view; the history JSON waits
   for `EditorState` JSON. The editing commands (`commands.ts`,
   `comment.ts`) follow in a separate PR.
+- M4, second part: the 20 commands of `commands.ts` that need only the
+  state (logical character motion, document and line selection, line
+  moving and copying, `transposeChars`, `splitLine`, `insertNewline`,
+  `insertNewlineKeepIndent`, `deleteTrailingWhitespace`), with the 17
+  upstream test cases that cover them and port-specific cases for the
+  rest. The other commands and the keymaps need the view (M6, M7) or
+  `@codemirror/language` (M8) and come with them; `deleteGroupForward`
+  and `deleteGroupBackward` are typed as state commands upstream but
+  attach the view's `announce` effect when deleting a selection, so they
+  wait for the view too.
 
 Every milestone after M5 runs the fidelity checks in section 5 and reports
 measured numbers. The highlighter (M8) follows CM6's design, a parse tree
