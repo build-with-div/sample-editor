@@ -387,8 +387,9 @@ one focused PR, merged before the next. Upstream: `@codemirror/state`
 
 Progress:
 - M1 merged in sample-editor#2.
-- M2 ports `facet.ts`, `state.ts`, `extension.ts`, `transaction.ts`,
-  `char.ts`, `column.ts` and `charcategory.ts`, with `test-facet.ts`,
+- M2 merged in sample-editor#4. It ports `facet.ts`, `state.ts`,
+  `extension.ts`, `transaction.ts`, `char.ts`, `column.ts` and
+  `charcategory.ts`, with `test-facet.ts`,
   `test-state.ts` and `test-charcategory.ts`, and `ChangeSet.filter`,
   left out of M1. `findClusterBreak` comes from `@marijn/find-cluster-break`
   1.0.4, ported as a module of `editor-state` with its test. Two parts are
@@ -397,6 +398,15 @@ Progress:
   `Text`, `ChangeSet` and `EditorSelection` JSON are ported), and
   `combineConfig`, which merges untyped config objects; the packages that
   use it get typed config structs when they are ported.
+- M3 ports `rangeset.ts` with `test-rangeset.ts`. `RangeValue` is a trait
+  with upstream's defaults; values are shared as `Arc`s and compared by
+  identity, then by `RangeValue::range_eq`. `RangeSet.compare` and
+  `RangeSet.spans` take trait objects for the comparator and span
+  iterator; a comparator opts into `boundChange` through
+  `wants_bound_changes`. Upstream's "ignores identical sub-nodes" test also
+  makes reading the first chunk's values throw, to prove the comparison
+  skips the shared chunk; Rust has no property traps, so the port checks
+  the reported ranges only.
 
 Every milestone after M5 runs the fidelity checks in section 5 and reports
 measured numbers. The highlighter (M8) follows CM6's design, a parse tree

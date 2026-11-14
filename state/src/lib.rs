@@ -16,12 +16,14 @@
 //!   `extension.ts`);
 //! - [`Transaction`], [`Annotation`] and [`StateEffect`], with change
 //!   filters, transaction filters and extenders (`transaction.ts`);
+//! - [`RangeSet`], [`RangeValue`], [`RangeSetBuilder`] and the span and
+//!   comparison iterators (`rangeset.ts`);
 //! - [`find_cluster_break`] and the other character helpers (`char.ts`,
 //!   with a port of its dependency `@marijn/find-cluster-break` 1.0.4),
 //!   [`count_column`] and [`find_column`] (`column.ts`), and
 //!   [`CharCategory`] (`charcategory.ts`).
 //!
-//! Not yet ported: `RangeSet` (`rangeset.ts`), `EditorState.toJSON` and
+//! Not yet ported: `EditorState.toJSON` and
 //! `fromJSON` with the field serializers, and `combineConfig`, which
 //! merges plain JavaScript config objects; the packages that use it are
 //! ported with typed config structs.
@@ -70,6 +72,7 @@ mod charcategory;
 mod cluster;
 mod column;
 mod facet;
+mod rangeset;
 mod selection;
 mod state;
 mod text;
@@ -84,6 +87,10 @@ pub use column::{count_column, find_column};
 pub use facet::{
     AnyValue, Callback, Compartment, Dep, Extension, Facet, FacetConfig, FacetReader, Prec,
     StateField, StateFieldSpec,
+};
+pub use rangeset::{
+    Range, RangeComparator, RangeCursor, RangeSet, RangeSetBuilder, RangeSetUpdate, RangeValue,
+    SpanIterator,
 };
 pub use selection::{EditorSelection, SelectionRange};
 pub use state::{
