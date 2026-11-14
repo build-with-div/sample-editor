@@ -92,7 +92,7 @@ div-platform, div-macros, div-cli), **components** (div-components). Size:
 | 13 | `requestAnimationFrame` (per document, typed handle; Tier 0) | **Missing**; only timers (`divui/src/task.rs:157-178`) and the platform redraw loop | framework | S | WPT `html/webappapis/update-rendering/` |
 | 14 | 14a stylesheets, selectors, pseudo-classes and pseudo-elements, custom properties, `@keyframes` (Tier 0), with the browser-compatible ingestion mode for third-party sheets and runtime custom properties (decision 2); 14b runtime `<style>` element text, which style-mod uses for a document root; 14c `insertRule` and adopted sheets, for shadow roots (decision 2's later step) | **Missing** (inline styles only); 14a in progress on the engine track | engine (style); framework (14b/14c API) | L + S–M + M | harness, WPT `css/`, `css/cssom/` |
 | 15 | UI Events completeness | **Partial**: no `detail`/`dblclick`; a right press fires `click` and no `contextmenu`/`auxclick`; a press on a child does not focus the focusable ancestor; no `pointer*` from headless input; `Key` has no `Insert`, `code` or modifier keys (`divui/src/keyboard.rs:11-33`) | framework (events) | S–M | WPT `uievents/`, `pointerevents/` |
-| 16 | Fast DOM line rendering | **Too slow, measured** (section 4): ~0.2 ms per inline box per layout; whole-document relayout and repaint per change (`div-engine/src/lib.rs:2605-2618,2659-2665`); no shaping cache (`div-layout/src/inline/items_builder.rs:290-312`); nested flex ~2.7x per level | engine (layout, text) | L | the probes here, against Chromium timings on the same machine |
+| 16 | Fast DOM line rendering | **Too slow, measured** (section 4): ~0.2 ms per inline box per layout; whole-document relayout and repaint per change (`div-engine/src/lib.rs:2605-2618,2659-2665`); no shaping cache (`div-layout/src/inline/items_builder.rs:290-312`); nested flex ~2.7x per level. Chromium 147 on the same machine: ~1.4 µs per box, flex at block cost, and the CM6 edit in 1.79 ms against Div's 272 ms (section 4) | engine (layout, text) | L | the probes here, against the Chromium timings of `fidelity/bench` |
 | 17 | Accessible editable text | **Partial**: AccessKit gives UIA TextPattern / AT-SPI Text to text inputs, but Div sets the selection on the run, not the control (`div-engine/src/accessibility.rs:761` vs `:819-831`); runs have no character positions or word starts (`:745-775`); `contenteditable` content is not exposed as editable text | engine (accessibility) | M | Chromium's accessibility tree for the same page (CDP `Accessibility.getFullAXTree`); manual NVDA/Orca |
 | 18 | Canvas 2D, `measureText` | **Missing** (`<canvas>` is a placeholder, `div-paint/src/painter.rs:6331`); `sample-canvas` is designing it | engine (paint, text); framework | L | harness |
 | 19 | `document.fonts` | **Missing**: `Document::register_font_face` exists (`document.rs:712`), with no load events | engine (text); framework | S | WPT `css/css-font-loading/` |
@@ -240,8 +240,113 @@ that is 272 ms. Getting there needs:
 - per-box cost about 20x lower;
 - relayout limited to the edited line, as LayoutNG caches it.
 
-The probe is the benchmark. It should also run in pinned Chromium on the
-same machine, to give the engine track a reference number (phase 2 step 2).
+The probe is the benchmark. The Chromium reference below runs the same
+cases in pinned Chromium on the same machine. There, the same edit takes
+1.79 ms.
+
+### Chromium reference for the line-rendering probes (M5)
+
+**Conditions.**
+- Browser: Chrome for Testing 147.0.7727.50, headless with
+  `--disable-gpu`, so compositing and raster run in software.
+- Machine and OS: the same machine as above, under WSL2 (Linux 6.18, 24
+  CPUs).
+- Viewport: 800x600 CSS px at scale 1.
+- Font: `monospace` resolves to DejaVu Sans Mono through Div's real-font
+  fontconfig profile. Div resolves `monospace` to Consolas on Windows.
+
+So the OS and the font differ from the Div runs, and the ratios below are
+indicative.
+
+**Runs and timing.** Each case runs on a fresh page. One warm-up pass over
+every case is discarded, then each case runs five times. The tables give
+the median, with the range over the runs in brackets.
+
+The DOM mutation is timed in the page. The frame after it comes from
+Chromium's trace:
+- style + layout: `UpdateLayoutTree` and `Layout`;
+- paint + raster: `PrePaint`, `Paint`, `Layerize` and `Commit`, plus
+  `RasterTask` CPU time summed over the raster threads.
+
+The tracing overhead is included.
+
+**Sources.**
+- Page: [lines.js](../fidelity/bench/lines.js), a port of `line_elements.rs`
+  and `inline_cost.rs` with the same lines, tokens, colours, structure and
+  steps. The window cases count the same inline boxes as the probe.
+- Runner: [run.py](../fidelity/bench/run.py).
+- Every run's numbers:
+  [chromium-147.json](../fidelity/bench/results/chromium-147.json).
+
+```bash
+python3 fidelity/bench/run.py --div /path/to/div --out fidelity/bench/results/chromium-147.json
+```
+
+**CM6-shaped viewport** (`window_flow_cost`, 100,000 lines). The Div
+column repeats the table above.
+
+| Lines in the DOM | Inline boxes | Style + layout | Edit one line + layout + paint | Scroll to middle + paint | Div: edit one line + layout + paint |
+| --- | --- | --- | --- | --- | --- |
+| Visible only (43), plain text | 43 | 0.30 ms (0.27–0.57) | 0.74 ms (0.69–0.86) | 2.66 ms (2.40–2.94) | 12.0–21.0 ms |
+| Visible only, same-colour tokens merged | 249 | 0.58 ms (0.51–0.68) | 1.07 ms (0.90–1.24) | 3.75 ms (3.66–4.41) | 54.4–70.9 ms |
+| Visible only, a span per token | 555 | 1.21 ms (0.92–1.68) | 1.15 ms (1.01–1.45) | 5.99 ms (4.97–6.14) | 109–151 ms |
+| Visible + 1000px margin (CM6's default), a span per token | 1,921 | 2.78 ms (2.66–3.29) | 1.79 ms (1.67–2.29) | 10.7 ms (10.5–11.8) | 272 ms |
+
+Paint + raster of the first frame was 1.47–3.69 ms (medians) across these
+four cases.
+
+**Monaco-shaped window** (`windowed`): the 43 lines are absolutely
+positioned in a flex shell.
+
+| Document lines | Style + layout | Edit one line + layout + paint | Scroll to middle + paint | Div: edit one line + layout + paint |
+| --- | --- | --- | --- | --- |
+| 10,000 | 1.09 ms (1.01–1.28) | 1.33 ms (1.25–2.20) | 6.16 ms (6.04–8.60) | 883 ms |
+| 100,000 | 1.10 ms (1.00–1.37) | 1.32 ms (1.17–1.93) | 6.56 ms (5.89–7.75) | 887 ms |
+
+**Every line in the DOM** (`all_lines`, flex shell):
+
+| Lines | Style + layout | Edit one line + layout + paint | Insert at top + layout + paint | Div: layout |
+| --- | --- | --- | --- | --- |
+| 200 | 4.07 ms (3.98–5.32) | 2.14 ms (1.68–2.75) | 5.59 ms (5.08–7.25) | 2.10 s |
+| 500 | 11.1 ms (9.67–16.3) | 2.47 ms (2.10–2.93) | 7.74 ms (7.33–8.32) | 5.70 s |
+| 2,000 | 47.2 ms (39.6–61.4) | 5.63 ms (5.43–5.84) | 17.0 ms (15.6–17.9) | 27.3 s |
+| 200 inside 3 more nested flex columns | 4.09 ms (3.88–8.83) | 1.91 ms (1.76–1.99) | 5.85 ms (5.44–6.74) | 40.6 s |
+
+**Hit testing.** `elementFromPoint` took 3–17 µs per call across all runs
+of the `windowed` and `all_lines` cases. Each figure is the mean of 100
+calls at distinct points along y = 300, because Chromium caches a repeated
+point.
+
+**Where the time goes** (`inline_cost`, a fresh document, style + layout):
+
+| 40 lines × spans per line | 1 | 4 | 8 | 16 | 32 |
+| --- | --- | --- | --- | --- | --- |
+| Block container | 0.26 ms | 0.41 ms | 0.59 ms | 0.96 ms | 1.82 ms |
+| Flex column container | 0.27 ms | 0.40 ms | 0.57 ms | 0.94 ms | 1.62 ms |
+
+| Lines × 8 spans | 10 | 40 | 160 | 640 |
+| --- | --- | --- | --- | --- |
+| Block | 0.23 ms | 0.59 ms | 1.93 ms | 7.14 ms |
+| Flex column | 0.24 ms | 0.57 ms | 1.98 ms | 7.26 ms |
+
+**What this tells the engine track.** Three measured gaps:
+- **Per-box cost.** Between 160 and 640 lines of 8 spans (3,840 more
+  inline boxes), Chromium adds about 1.4 µs per box
+  ((7.14 − 1.93) ms / 3,840). Div, measured the same way, adds about
+  260 µs per box ((1.27 s − 280 ms) / 3,840), roughly 190x more.
+- **Flex.** A flex column costs Chromium the same as a block container.
+  It costs Div about 2.7x.
+- **Incremental edits.** Chromium's edit step is cheaper than laying out
+  the window from scratch: 1.79 ms against 2.78 ms at 1,921 boxes. With
+  every line in the DOM, the edit costs 5.63 ms against 47.2 ms for the
+  full layout at 2,000 lines. From 200 lines to 2,000, the edit grows from
+  2.14 ms to 5.63 ms while the full layout grows from 4.07 ms to 47.2 ms.
+  Div re-lays out and repaints everything on each edit, so its edit costs
+  about as much as a full layout (272 ms against 340 ms; 2.16 s against
+  2.10 s).
+
+At CM6's default viewport, Div's edit (272 ms) is about 150x Chromium's
+(1.79 ms).
 
 ### `<textarea>` with a large document (feature 21) ([textarea.rs](../probes/tests/textarea.rs))
 
@@ -429,8 +534,16 @@ Progress:
   (WSL) through Div's CDP helpers at `92ea25a0` and writes a screenshot,
   the editor's `outerHTML`, the stylesheet text, the accessibility tree
   and the case state to `fidelity/fixtures/reference-v1/`. Two further
-  captures with `--check` reproduced all 20 files byte for byte. The
-  line-rendering benchmark in Chromium is the second part.
+  captures with `--check` reproduced all 20 files byte for byte.
+- M5, second part: the line-rendering benchmark in Chromium,
+  `fidelity/bench/`, with the results in section 4.
+  - `lines.js` ports the `line_elements` and `inline_cost` probes.
+  - `run.py` times each step in Chrome for Testing 147.0.7727.50 from
+    Chromium's trace.
+  - At CM6's default viewport (1,921 inline boxes), one edit plus layout
+    plus paint takes 1.79 ms in Chromium against 272 ms in Div.
+  - Per inline box, Chromium's layout costs about 1.4 µs against Div's
+    260 µs, measured the same way.
 
 Every milestone after M5 runs the fidelity checks in section 5 and reports
 measured numbers. The highlighter (M8) follows CM6's design, a parse tree
