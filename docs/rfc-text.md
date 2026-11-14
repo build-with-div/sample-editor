@@ -7,6 +7,25 @@ sample does not patch or fork Div.
 Pinned Div: `565db46a`. Evidence: [design.md](design.md) (sections 2 and 4)
 and the probes in [`probes/tests`](../probes/tests).
 
+**Accepted decisions (13 Nov 2026).** The user accepted the platform plan's
+decisions (`platform-plan/decisions-2026-11-13.md`, Q1–Q16). For this RFC:
+
+- **B is adopted** (decision 6): web-shaped `Range`, `Selection` and
+  `StaticRange`, UTF-8 byte offsets in Rust and UTF-16 at the FFI. Owner:
+  engine.
+- **`contenteditable` before `EditContext`** (decision 11). Owner: engine.
+- **One `DataTransfer`** for clipboard and drag; files are web-style `File`
+  objects wrapping paths (decision 7). Owner: framework, with the engine.
+- **Runtime CSS** (decision 2): a browser-compatible ingestion mode for
+  third-party sheets (drops what Chromium drops and reports it) and runtime
+  custom-property writes now; runtime sheet insertion later, alongside the
+  editor work. Section H says what CodeMirror needs from it.
+- **Frame and observer shapes** (decision 4): `requestAnimationFrame` per
+  document with a typed handle, in every window; one `ResizeObserver` with
+  three boxes, computed by the engine after layout and delivered by the
+  framework before paint; Pointer Events as typed enums and bitflags with
+  web values, mouse `pointerId` 1. These are Tier 0 work.
+
 ## Principle
 
 CodeMirror 6, Monaco, ProseMirror/TipTap and Lexical are built on a known
@@ -23,7 +42,7 @@ exceptions mapped to `Error` variants. Where the doc comment of a Rust
 method names its web counterpart, the Chromium behaviour of that
 counterpart is the specification.
 
-**Offsets.** The web counts DOM text offsets in UTF-16 code units. Div's
+**Offsets** (adopted, decision 6). The web counts DOM text offsets in UTF-16 code units. Div's
 existing Rust selection API counts UTF-8 bytes (`Element::selection`). This
 RFC keeps UTF-8 byte offsets in the Rust API, and the engine keeps the web
 model internally. Div's FFI facade converts to UTF-16 at its boundary. An
@@ -33,15 +52,16 @@ offset that is not on a char boundary is an `Error`, as the web's
 | Section | Features (design.md numbering) | Owner | Size |
 | --- | --- | --- | --- |
 | [A](#a-editing-host-contenteditable-and-input-events) | 2 `contenteditable`, 3 `beforeinput`/`input` | engine (editing, layout, paint); framework (events) | L + M |
-| [B](#b-selection-and-range) | 4 Selection API and painting, 5 Range geometry, 6 caret from point | engine (editing, layout, paint); framework | L + M + M |
-| [C](#c-composition-and-ime) | 7 composition and IME; 20 `EditContext` later | framework (platform, events) | M (L for EditContext) |
-| [D](#d-clipboard-and-drag-and-drop) | 8 clipboard events and `DataTransfer`, 9 drag and drop | framework (platform, events) | M + M |
+| [B](#b-selection-and-range) | 4 Selection API and painting, 5 Range geometry, 6 caret from point (adopted) | engine | L + M + M |
+| [C](#c-composition-and-ime) | 7 composition and IME; 20 `EditContext` after `contenteditable` | framework (platform, events) | M (L for EditContext) |
+| [D](#d-clipboard-and-drag-and-drop) | 8 clipboard events and 9 drag and drop, sharing one `DataTransfer` | framework, with the engine | M + M |
 | [E](#e-observers-and-frame-callbacks) | 10 `MutationObserver`, 11 `ResizeObserver`, 12 `IntersectionObserver`, 13 `requestAnimationFrame`, 19 `document.fonts` | engine (DOM, layout, text); framework | M + S–M + M + S + S |
 | [F](#f-fast-dom-line-rendering) | 16 layout that scales with what changed | engine (layout, text, paint) | L |
 | [G](#g-accessible-editable-text) | 17 UIA TextPattern / AT-SPI Text for editable content | engine (accessibility) | M |
+| [H](#h-runtime-stylesheets-for-style-mod) | 14b runtime `<style>` text, 14c `insertRule` and adopted sheets | engine (style); framework (API) | S–M + M |
 
 Not drafted here:
-- 14, stylesheets and selectors: the engine track is already working on it.
+- 14a, stylesheets and selectors: Tier 0 on the engine track.
 - 15, UI Events completeness: a list of small fixes in design.md.
 - 18, canvas 2D and `measureText`: designed by `sample-canvas`.
 - 21, `<textarea>` parity: Chromium's textarea is the specification.
@@ -115,8 +135,10 @@ offset map that can be queried.
 **Proposal.**
 
 ```rust
-/// A live DOM Range (Range, StaticRange for input events).
+/// A live DOM Range.
 pub struct Range { /* … */ }
+/// `StaticRange`: an immutable range, as `getTargetRanges()` returns.
+pub struct StaticRange { /* … */ }
 
 impl Document {
     pub fn create_range(&self) -> Range;
@@ -189,8 +211,8 @@ calls winit's `set_ime_cursor_area`. The `input` after a commit has no
 - The platform places the candidate window at the caret's rect: B's
   geometry for the focused selection, passed to `set_ime_cursor_area` after
   each layout that moves it.
-- Later, **`EditContext`** (feature 20), which Monaco's newer input path
-  uses. It is the same flow with the app holding the text. It also gives
+- Later, after `contenteditable` (decision 11), **`EditContext`**
+  (feature 20), which Monaco's newer input path uses. It is the same flow with the app holding the text. It also gives
   `characterboundsupdate` for the IME. It is drafted only once A–C exist,
   since it shares their plumbing.
 
@@ -209,6 +231,9 @@ around Ctrl+C/X/V (`div-platform/src/desktop.rs:924-949`). There are no
 
 **Proposal.**
 
+One `DataTransfer` type serves clipboard events, drag events and the
+`dataTransfer` of `beforeinput` (decision 7).
+
 ```rust
 /// `DataTransfer`: typed items. `text/plain`, `text/html` and custom
 /// web types (`web application/x-…`), as Chromium maps them to native formats.
@@ -217,6 +242,8 @@ impl DataTransfer {
     pub fn get_data(&self, format: &str) -> Option<String>;
     pub fn set_data(&self, format: &str, data: &str);
     pub fn types(&self) -> Vec<String>;
+    /// Web-style `File` objects; on desktop they wrap paths.
+    pub fn files(&self) -> Vec<File>;
     pub fn set_drag_image(&self, element: &Element, x: f32, y: f32);
 }
 impl Event {
@@ -248,10 +275,11 @@ Chromium runs it. The Rust callbacks receive typed records.
 
 ```rust
 pub struct MutationObserver;      // observe(target, MutationObserverInit), take_records, disconnect
-pub struct ResizeObserver;        // observe(element, box), entries with content/border box sizes
+pub struct ResizeObserver;        // observe(element, box): content-box, border-box, device-pixel-content-box
 pub struct IntersectionObserver;  // root, root_margin, thresholds; entries with ratios and rects
 impl Document {
-    /// `requestAnimationFrame`: runs before style, layout and paint of the next frame.
+    /// `requestAnimationFrame`: runs before style, layout and paint of the
+    /// next frame of this document's window; works in every window.
     pub fn request_animation_frame(&self, f: impl FnOnce(f64) + 'static) -> FrameRequestId;
     pub fn cancel_animation_frame(&self, id: FrameRequestId);
     /// `document.fonts`: `ready`, and `loading`/`loadingdone` events.
@@ -262,7 +290,9 @@ impl Document {
 `MutationObserver` records come from the engine's DOM mutation points.
 Those include edits that A's editing host makes; ProseMirror and CM6 read
 exactly these. `ResizeObserver` and `IntersectionObserver` run after
-layout in the update-the-rendering steps.
+layout in the update-the-rendering steps: the engine computes the entries
+after layout and the framework delivers them before paint (decision 4).
+`requestAnimationFrame` and `ResizeObserver` are Tier 0 work.
 
 **Verify.** WPT `dom/nodes/MutationObserver-*`, `resize-observer/`,
 `intersection-observer/`, `html/webappapis/update-rendering/`,
@@ -325,6 +355,40 @@ gap 26) is part of this.
 from CDP `Accessibility.getFullAXTree`. Manual checks with NVDA (Windows)
 and Orca (Linux) reading by character, word and line, and following the
 caret.
+
+## H. Runtime stylesheets for style-mod
+
+**What CodeMirror does.** CM6 styles everything through `style-mod`
+4.1.4. Its `StyleModule.mount` takes one of two paths
+(`style-mod/src/style-mod.js:94-139`):
+
+- **A document root** (it has a `head`), which is how an editor is
+  normally mounted: a `<style>` element in `<head>`, whose `textContent` is
+  rewritten with every mounted module's rules whenever the set changes.
+- **A shadow root**: one constructed `CSSStyleSheet` per document, filled
+  with `insertRule` and prepended to the root's `adoptedStyleSheets`.
+
+So the common case needs no CSSOM, only a `<style>` element whose text
+the engine parses at runtime and re-parses when it changes (14b). It fits
+decision 2's browser-compatible ingestion mode: the sheet comes from a
+third-party package, so Div should drop what Chromium drops and report
+it. `insertRule` and adopted sheets (14c) are needed only for editors in
+shadow roots and belong to decision 2's later CSSOM step.
+
+**Proposal.**
+- 14b: `<style>` elements in the document are stylesheets, parsed in the
+  ingestion mode when connected and whenever their text changes, and
+  ordered by document position, as in Chromium. Size S–M once the
+  ingestion mode exists. Owner: engine (style), framework (the element's
+  text API).
+- 14c: `CSSStyleSheet` construction, `insertRule`, `deleteRule`, and
+  `adoptedStyleSheets` on documents and shadow roots. Size M. Owner:
+  framework (API surface), engine (rule storage and invalidation).
+
+**Verify.** WPT `css/cssom/` (`insertRule`, constructable stylesheets) and
+`html/semantics/document-metadata/the-style-element/`. The harness renders
+the CM6 reference captures (design.md section 5) with their `<style>` text
+unchanged.
 
 ## Rejected alternatives
 
