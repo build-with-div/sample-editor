@@ -398,7 +398,7 @@ Progress:
   `Text`, `ChangeSet` and `EditorSelection` JSON are ported), and
   `combineConfig`, which merges untyped config objects; the packages that
   use it get typed config structs when they are ported.
-- M3 ports `rangeset.ts` with `test-rangeset.ts`. `RangeValue` is a trait
+- M3 merged in sample-editor#5. It ports `rangeset.ts` with `test-rangeset.ts`. `RangeValue` is a trait
   with upstream's defaults; values are shared as `Arc`s and compared by
   identity, then by `RangeValue::range_eq`. `RangeSet.compare` and
   `RangeSet.spans` take trait objects for the comparator and span
@@ -407,6 +407,11 @@ Progress:
   makes reading the first chunk's values throw, to prove the comparison
   skips the shared chunk; Rust has no property traps, so the port checks
   the reported ranges only.
+- M4, first part: the undo history (`history.ts` with `test-history.ts`)
+  in a new `editor-commands` crate. `historyKeymap` and the `historyUndo`/
+  `historyRedo` input handler wait for the view; the history JSON waits
+  for `EditorState` JSON. The editing commands (`commands.ts`,
+  `comment.ts`) follow in a separate PR.
 
 Every milestone after M5 runs the fidelity checks in section 5 and reports
 measured numbers. The highlighter (M8) follows CM6's design, a parse tree

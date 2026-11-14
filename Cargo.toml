@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["probes", "state"]
+members = ["commands", "probes", "state"]
 
 [workspace.package]
 edition = "2021"
