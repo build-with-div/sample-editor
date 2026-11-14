@@ -412,7 +412,7 @@ Progress:
   `historyRedo` input handler wait for the view; the history JSON waits
   for `EditorState` JSON. The editing commands (`commands.ts`,
   `comment.ts`) follow in a separate PR.
-- M4, second part: the 20 commands of `commands.ts` that need only the
+- M4, second part (merged in sample-editor#7): the 20 commands of `commands.ts` that need only the
   state (logical character motion, document and line selection, line
   moving and copying, `transposeChars`, `splitLine`, `insertNewline`,
   `insertNewlineKeepIndent`, `deleteTrailingWhitespace`), with the 17
@@ -422,6 +422,15 @@ Progress:
   and `deleteGroupBackward` are typed as state commands upstream but
   attach the view's `announce` effect when deleting a selection, so they
   wait for the view too.
+- M5, first part: the reference capture (section 5 step 1) in
+  `fidelity/`. The pinned CM6 packages and Geist Mono build a page with
+  four cases (`plain`, `gutter`, `decorations`, `scrolled`).
+  `fidelity/capture.py` loads it in Chrome for Testing 147.0.7727.50
+  (WSL) through Div's CDP helpers at `92ea25a0` and writes a screenshot,
+  the editor's `outerHTML`, the stylesheet text, the accessibility tree
+  and the case state to `fidelity/fixtures/reference-v1/`. Two further
+  captures with `--check` reproduced all 20 files byte for byte. The
+  line-rendering benchmark in Chromium is the second part.
 
 Every milestone after M5 runs the fidelity checks in section 5 and reports
 measured numbers. The highlighter (M8) follows CM6's design, a parse tree

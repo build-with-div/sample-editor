@@ -1,3 +1,4 @@
 /target
 /out
 *.actual.png
+node_modules/
