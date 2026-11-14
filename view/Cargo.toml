@@ -5,7 +5,8 @@ edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
 publish = false
-description = "Port of @codemirror/view 6.43.15 (decorations and the height map so far) to Rust"
+description = "Port of @codemirror/view 6.43.15 (decorations, the height map and the content tile tree so far) to Rust"
 
 [dependencies]
+divui.workspace = true
 editor-state = { path = "../state" }

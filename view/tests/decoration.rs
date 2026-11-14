@@ -5,6 +5,8 @@
 
 use std::sync::Arc;
 
+use div::{Document, Element};
+
 use editor_state::{ChangeSet, ChangeSpec, MapMode, RangeError, RangeSet, RangeValue};
 use editor_view::__test::{add_range, height_relevant_deco_changes};
 use editor_view::{
@@ -15,6 +17,10 @@ use editor_view::{
 struct Label(&'static str);
 
 impl WidgetType for Label {
+    fn to_dom(&self, document: &Document) -> Result<Element, div::Error> {
+        Element::create(document, "span")
+    }
+
     fn eq(&self, other: &Self) -> bool {
         self.0 == other.0
     }
@@ -23,6 +29,10 @@ impl WidgetType for Label {
 struct Tall;
 
 impl WidgetType for Tall {
+    fn to_dom(&self, document: &Document) -> Result<Element, div::Error> {
+        Element::create(document, "span")
+    }
+
     fn estimated_height(&self) -> f64 {
         20.0
     }
@@ -31,6 +41,10 @@ impl WidgetType for Tall {
 struct Breaking;
 
 impl WidgetType for Breaking {
+    fn to_dom(&self, document: &Document) -> Result<Element, div::Error> {
+        Element::create(document, "span")
+    }
+
     fn line_breaks(&self) -> usize {
         2
     }
