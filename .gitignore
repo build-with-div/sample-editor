@@ -2,3 +2,4 @@
 /out
 *.actual.png
 node_modules/
+__pycache__/

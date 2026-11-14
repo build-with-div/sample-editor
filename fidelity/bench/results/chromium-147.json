@@ -1,0 +1,3215 @@
+{
+ "chromium": "147.0.7727.50",
+ "flags": "headless, --disable-gpu (software compositing and raster)",
+ "monospace": [
+  {
+   "familyName": "DejaVu Sans Mono",
+   "postScriptName": "DejaVuSansMono",
+   "isCustomFont": false,
+   "glyphCount": 38
+  }
+ ],
+ "viewport": {
+  "width": 800,
+  "height": 600,
+  "deviceScaleFactor": 1
+ },
+ "machine": {
+  "system": "Linux",
+  "release": "6.18.58.1-microsoft-standard-WSL2",
+  "cpus": 24
+ },
+ "div_tooling": "92ea25a0756dd3e22aa57266ae5ead49a1ff9d8f",
+ "runs": 5,
+ "warmup": 1,
+ "cases": {
+  "flow-plain-0": {
+   "kind": "windowFlow",
+   "args": [
+    100000,
+    "Plain",
+    0
+   ],
+   "runs": [
+    {
+     "inlineBoxes": 43,
+     "build": {
+      "mutation": 0.10000000000582077,
+      "script": 0.10000000000582077,
+      "style": 0.179,
+      "layout": 0.396,
+      "paint": 0.508,
+      "raster": 0.977,
+      "total": 2.160000000005821
+     },
+     "edit": {
+      "mutation": 0.1999999999825377,
+      "script": 0.1999999999825377,
+      "style": 0.035,
+      "layout": 0.069,
+      "paint": 0.233,
+      "raster": 0.319,
+      "total": 0.8559999999825377
+     },
+     "scroll": {
+      "mutation": 0.39999999999417923,
+      "script": 0.1079999999941792,
+      "style": 0.068,
+      "layout": 0.224,
+      "paint": 0.275,
+      "raster": 2.104,
+      "total": 2.7789999999941797
+     }
+    },
+    {
+     "inlineBoxes": 43,
+     "build": {
+      "mutation": 0.10000000000582077,
+      "script": 0.10000000000582077,
+      "style": 0.091,
+      "layout": 0.179,
+      "paint": 0.304,
+      "raster": 1.032,
+      "total": 1.7060000000058209
+     },
+     "edit": {
+      "mutation": 0.10000000000582077,
+      "script": 0.10000000000582077,
+      "style": 0.034,
+      "layout": 0.074,
+      "paint": 0.235,
+      "raster": 0.352,
+      "total": 0.7950000000058207
+     },
+     "scroll": {
+      "mutation": 0.40000000002328306,
+      "script": 0.15500000002328307,
+      "style": 0.069,
+      "layout": 0.176,
+      "paint": 0.276,
+      "raster": 1.723,
+      "total": 2.399000000023283
+     }
+    },
+    {
+     "inlineBoxes": 43,
+     "build": {
+      "mutation": 0.10000000000582077,
+      "script": 0.10000000000582077,
+      "style": 0.098,
+      "layout": 0.202,
+      "paint": 0.296,
+      "raster": 1.027,
+      "total": 1.7230000000058208
+     },
+     "edit": {
+      "mutation": 0,
+      "script": 0.0,
+      "style": 0.042,
+      "layout": 0.085,
+      "paint": 0.25,
+      "raster": 0.314,
+      "total": 0.6910000000000001
+     },
+     "scroll": {
+      "mutation": 0.5,
+      "script": 0.193,
+      "style": 0.125,
+      "layout": 0.182,
+      "paint": 0.285,
+      "raster": 1.763,
+      "total": 2.548
+     }
+    },
+    {
+     "inlineBoxes": 43,
+     "build": {
+      "mutation": 0.1999999999825377,
+      "script": 0.1999999999825377,
+      "style": 0.089,
+      "layout": 0.181,
+      "paint": 0.276,
+      "raster": 1.299,
+      "total": 2.0449999999825375
+     },
+     "edit": {
+      "mutation": 0.09999999997671694,
+      "script": 0.09999999997671694,
+      "style": 0.034,
+      "layout": 0.07,
+      "paint": 0.229,
+      "raster": 0.301,
+      "total": 0.7339999999767169
+     },
+     "scroll": {
+      "mutation": 0.39999999999417923,
+      "script": 0.16399999999417922,
+      "style": 0.066,
+      "layout": 0.17,
+      "paint": 0.284,
+      "raster": 1.972,
+      "total": 2.655999999994179
+     }
+    },
+    {
+     "inlineBoxes": 43,
+     "build": {
+      "mutation": 0.10000000000582077,
+      "script": 0.10000000000582077,
+      "style": 0.098,
+      "layout": 0.207,
+      "paint": 0.311,
+      "raster": 1.162,
+      "total": 1.8780000000058208
+     },
+     "edit": {
+      "mutation": 0,
+      "script": 0.0,
+      "style": 0.035,
+      "layout": 0.073,
+      "paint": 0.272,
+      "raster": 0.36,
+      "total": 0.74
+     },
+     "scroll": {
+      "mutation": 0.39999999999417923,
+      "script": 0.15599999999417924,
+      "style": 0.069,
+      "layout": 0.175,
+      "paint": 0.352,
+      "raster": 2.185,
+      "total": 2.936999999994179
+     }
+    }
+   ]
+  },
+  "flow-grouped-0": {
+   "kind": "windowFlow",
+   "args": [
+    100000,
+    "Grouped",
+    0
+   ],
+   "runs": [
+    {
+     "inlineBoxes": 249,
+     "build": {
+      "mutation": 0.3000000000174623,
+      "script": 0.3000000000174623,
+      "style": 0.238,
+      "layout": 0.272,
+      "paint": 0.467,
+      "raster": 1.095,
+      "total": 2.3720000000174624
+     },
+     "edit": {
+      "mutation": 0.10000000000582077,
+      "script": 0.10000000000582077,
+      "style": 0.046,
+      "layout": 0.101,
+      "paint": 0.323,
+      "raster": 0.331,
+      "total": 0.9010000000058208
+     },
+     "scroll": {
+      "mutation": 1.099999999976717,
+      "script": 0.5809999999767169,
+      "style": 0.24,
+      "layout": 0.279,
+      "paint": 0.461,
+      "raster": 2.203,
+      "total": 3.7639999999767166
+     }
+    },
+    {
+     "inlineBoxes": 249,
+     "build": {
+      "mutation": 0.39999999999417923,
+      "script": 0.39999999999417923,
+      "style": 0.269,
+      "layout": 0.311,
+      "paint": 0.49,
+      "raster": 1.315,
+      "total": 2.784999999994179
+     },
+     "edit": {
+      "mutation": 0.10000000000582077,
+      "script": 0.10000000000582077,
+      "style": 0.118,
+      "layout": 0.146,
+      "paint": 0.578,
+      "raster": 0.3,
+      "total": 1.2420000000058207
+     },
+     "scroll": {
+      "mutation": 1.1999999999825377,
+      "script": 0.6099999999825376,
+      "style": 0.263,
+      "layout": 0.327,
+      "paint": 0.512,
+      "raster": 2.696,
+      "total": 4.407999999982538
+     }
+    },
+    {
+     "inlineBoxes": 249,
+     "build": {
+      "mutation": 0.40000000002328306,
+      "script": 0.40000000002328306,
+      "style": 0.262,
+      "layout": 0.408,
+      "paint": 0.458,
+      "raster": 1.462,
+      "total": 2.990000000023283
+     },
+     "edit": {
+      "mutation": 0.10000000000582077,
+      "script": 0.10000000000582077,
+      "style": 0.048,
+      "layout": 0.112,
+      "paint": 0.324,
+      "raster": 0.323,
+      "total": 0.9070000000058208
+     },
+     "scroll": {
+      "mutation": 1.1000000000058208,
+      "script": 0.5250000000058208,
+      "style": 0.273,
+      "layout": 0.302,
+      "paint": 0.5,
+      "raster": 2.061,
+      "total": 3.6610000000058207
+     }
+    },
+    {
+     "inlineBoxes": 249,
+     "build": {
+      "mutation": 0.3000000000174623,
+      "script": 0.3000000000174623,
+      "style": 0.254,
+      "layout": 0.292,
+      "paint": 0.469,
+      "raster": 1.166,
+      "total": 2.4810000000174623
+     },
+     "edit": {
+      "mutation": 0.10000000000582077,
+      "script": 0.10000000000582077,
+      "style": 0.049,
+      "layout": 0.097,
+      "paint": 0.315,
+      "raster": 0.507,
+      "total": 1.0680000000058207
+     },
+     "scroll": {
+      "mutation": 1.1000000000058208,
+      "script": 0.5330000000058207,
+      "style": 0.233,
+      "layout": 0.334,
+      "paint": 0.524,
+      "raster": 2.122,
+      "total": 3.7460000000058207
+     }
+    },
+    {
+     "inlineBoxes": 249,
+     "build": {
+      "mutation": 0.29999999998835847,
+      "script": 0.29999999998835847,
+      "style": 0.395,
+      "layout": 0.287,
+      "paint": 0.51,
+      "raster": 1.318,
+      "total": 2.8099999999883587
+     },
+     "edit": {
+      "mutation": 0.09999999997671694,
+      "script": 0.09999999997671694,
+      "style": 0.053,
+      "layout": 0.101,
+      "paint": 0.41,
+      "raster": 0.432,
+      "total": 1.095999999976717
+     },
+     "scroll": {
+      "mutation": 1.1000000000058208,
+      "script": 0.5670000000058207,
+      "style": 0.233,
+      "layout": 0.3,
+      "paint": 0.569,
+      "raster": 2.064,
+      "total": 3.7330000000058208
+     }
+    }
+   ]
+  },
+  "flow-tokens-0": {
+   "kind": "windowFlow",
+   "args": [
+    100000,
+    "Tokens",
+    0
+   ],
+   "runs": [
+    {
+     "inlineBoxes": 555,
+     "build": {
+      "mutation": 0.6000000000058208,
+      "script": 0.6000000000058208,
+      "style": 0.424,
+      "layout": 0.5,
+      "paint": 0.807,
+      "raster": 1.539,
+      "total": 3.870000000005821
+     },
+     "edit": {
+      "mutation": 0.10000000000582077,
+      "script": 0.10000000000582077,
+      "style": 0.054,
+      "layout": 0.155,
+      "paint": 0.454,
+      "raster": 0.39,
+      "total": 1.1530000000058207
+     },
+     "scroll": {
+      "mutation": 2.6999999999825377,
+      "script": 1.1389999999825378,
+      "style": 0.856,
+      "layout": 0.705,
+      "paint": 0.788,
+      "raster": 2.655,
+      "total": 6.142999999982537
+     }
+    },
+    {
+     "inlineBoxes": 555,
+     "build": {
+      "mutation": 0.6000000000058208,
+      "script": 0.6000000000058208,
+      "style": 0.756,
+      "layout": 0.451,
+      "paint": 0.799,
+      "raster": 1.338,
+      "total": 3.944000000005821
+     },
+     "edit": {
+      "mutation": 0.10000000000582077,
+      "script": 0.10000000000582077,
+      "style": 0.059,
+      "layout": 0.124,
+      "paint": 0.432,
+      "raster": 0.402,
+      "total": 1.1170000000058207
+     },
+     "scroll": {
+      "mutation": 1.8999999999941792,
+      "script": 0.9399999999941793,
+      "style": 0.45,
+      "layout": 0.51,
+      "paint": 0.786,
+      "raster": 3.302,
+      "total": 5.987999999994179
+     }
+    },
+    {
+     "inlineBoxes": 555,
+     "build": {
+      "mutation": 0.6000000000058208,
+      "script": 0.6000000000058208,
+      "style": 0.89,
+      "layout": 0.561,
+      "paint": 0.802,
+      "raster": 2.166,
+      "total": 5.019000000005821
+     },
+     "edit": {
+      "mutation": 0,
+      "script": 0.0,
+      "style": 0.055,
+      "layout": 0.113,
+      "paint": 0.448,
+      "raster": 0.397,
+      "total": 1.0130000000000001
+     },
+     "scroll": {
+      "mutation": 2,
+      "script": 1.018,
+      "style": 0.434,
+      "layout": 0.548,
+      "paint": 0.779,
+      "raster": 3.236,
+      "total": 6.015
+     }
+    },
+    {
+     "inlineBoxes": 555,
+     "build": {
+      "mutation": 0.7000000000116415,
+      "script": 0.7000000000116415,
+      "style": 0.514,
+      "layout": 0.459,
+      "paint": 0.807,
+      "raster": 1.562,
+      "total": 4.042000000011642
+     },
+     "edit": {
+      "mutation": 0.1999999999825377,
+      "script": 0.1999999999825377,
+      "style": 0.072,
+      "layout": 0.126,
+      "paint": 0.525,
+      "raster": 0.53,
+      "total": 1.4529999999825378
+     },
+     "scroll": {
+      "mutation": 1.900000000023283,
+      "script": 1.009000000023283,
+      "style": 0.442,
+      "layout": 0.449,
+      "paint": 0.751,
+      "raster": 2.319,
+      "total": 4.970000000023283
+     }
+    },
+    {
+     "inlineBoxes": 555,
+     "build": {
+      "mutation": 1,
+      "script": 1.0,
+      "style": 0.914,
+      "layout": 0.767,
+      "paint": 1.425,
+      "raster": 2.434,
+      "total": 6.54
+     },
+     "edit": {
+      "mutation": 0.10000000000582077,
+      "script": 0.10000000000582077,
+      "style": 0.062,
+      "layout": 0.124,
+      "paint": 0.498,
+      "raster": 0.452,
+      "total": 1.2360000000058209
+     },
+     "scroll": {
+      "mutation": 1.900000000023283,
+      "script": 0.9500000000232831,
+      "style": 0.473,
+      "layout": 0.477,
+      "paint": 0.77,
+      "raster": 2.858,
+      "total": 5.528000000023283
+     }
+    }
+   ]
+  },
+  "flow-tokens-1000": {
+   "kind": "windowFlow",
+   "args": [
+    100000,
+    "Tokens",
+    1000
+   ],
+   "runs": [
+    {
+     "inlineBoxes": 1921,
+     "build": {
+      "mutation": 1.6000000000058208,
+      "script": 1.6000000000058208,
+      "style": 1.317,
+      "layout": 1.346,
+      "paint": 2.354,
+      "raster": 1.533,
+      "total": 8.150000000005821
+     },
+     "edit": {
+      "mutation": 0.10000000000582077,
+      "script": 0.10000000000582077,
+      "style": 0.065,
+      "layout": 0.223,
+      "paint": 0.915,
+      "raster": 0.369,
+      "total": 1.6720000000058208
+     },
+     "scroll": {
+      "mutation": 5.899999999994179,
+      "script": 2.7619999999941793,
+      "style": 1.449,
+      "layout": 1.689,
+      "paint": 2.067,
+      "raster": 2.553,
+      "total": 10.51999999999418
+     }
+    },
+    {
+     "inlineBoxes": 1921,
+     "build": {
+      "mutation": 1.6999999999825377,
+      "script": 1.6999999999825377,
+      "style": 1.476,
+      "layout": 1.287,
+      "paint": 2.051,
+      "raster": 1.44,
+      "total": 7.953999999982537
+     },
+     "edit": {
+      "mutation": 0.10000000000582077,
+      "script": 0.10000000000582077,
+      "style": 0.068,
+      "layout": 0.183,
+      "paint": 0.886,
+      "raster": 0.473,
+      "total": 1.7100000000058206
+     },
+     "scroll": {
+      "mutation": 5.2000000000116415,
+      "script": 2.4140000000116415,
+      "style": 1.451,
+      "layout": 1.335,
+      "paint": 1.875,
+      "raster": 3.613,
+      "total": 10.688000000011643
+     }
+    },
+    {
+     "inlineBoxes": 1921,
+     "build": {
+      "mutation": 1.8999999999941792,
+      "script": 1.8999999999941792,
+      "style": 1.427,
+      "layout": 1.355,
+      "paint": 2.259,
+      "raster": 1.433,
+      "total": 8.37399999999418
+     },
+     "edit": {
+      "mutation": 0.3000000000174623,
+      "script": 0.3000000000174623,
+      "style": 0.065,
+      "layout": 0.187,
+      "paint": 0.848,
+      "raster": 0.389,
+      "total": 1.7890000000174622
+     },
+     "scroll": {
+      "mutation": 5.5,
+      "script": 2.83,
+      "style": 1.384,
+      "layout": 1.286,
+      "paint": 2.081,
+      "raster": 2.94,
+      "total": 10.521
+     }
+    },
+    {
+     "inlineBoxes": 1921,
+     "build": {
+      "mutation": 1.7000000000116415,
+      "script": 1.7000000000116415,
+      "style": 1.497,
+      "layout": 1.468,
+      "paint": 2.028,
+      "raster": 1.559,
+      "total": 8.252000000011641
+     },
+     "edit": {
+      "mutation": 0.1999999999825377,
+      "script": 0.1999999999825377,
+      "style": 0.068,
+      "layout": 0.192,
+      "paint": 1.157,
+      "raster": 0.677,
+      "total": 2.293999999982538
+     },
+     "scroll": {
+      "mutation": 5.5,
+      "script": 2.747,
+      "style": 1.425,
+      "layout": 1.328,
+      "paint": 2.053,
+      "raster": 3.185,
+      "total": 10.738
+     }
+    },
+    {
+     "inlineBoxes": 1921,
+     "build": {
+      "mutation": 1.8999999999941792,
+      "script": 1.8999999999941792,
+      "style": 1.772,
+      "layout": 1.519,
+      "paint": 2.722,
+      "raster": 2.05,
+      "total": 9.962999999994178
+     },
+     "edit": {
+      "mutation": 0.1999999999825377,
+      "script": 0.1999999999825377,
+      "style": 0.154,
+      "layout": 0.231,
+      "paint": 0.897,
+      "raster": 0.533,
+      "total": 2.0149999999825376
+     },
+     "scroll": {
+      "mutation": 5.5,
+      "script": 2.753,
+      "style": 1.438,
+      "layout": 1.309,
+      "paint": 2.24,
+      "raster": 4.063,
+      "total": 11.803
+     }
+    }
+   ]
+  },
+  "windowed-10000": {
+   "kind": "windowed",
+   "args": [
+    10000
+   ],
+   "runs": [
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0.8999999999941792,
+      "script": 0.8999999999941792,
+      "style": 0.57,
+      "layout": 0.711,
+      "paint": 0.894,
+      "raster": 2.104,
+      "total": 5.178999999994179
+     },
+     "edit": {
+      "mutation": 0.1999999999825377,
+      "script": 0.1999999999825377,
+      "style": 0.064,
+      "layout": 0.187,
+      "paint": 0.58,
+      "raster": 0.4,
+      "total": 1.4309999999825376
+     },
+     "insertTop": {
+      "mutation": 1,
+      "script": 1.0,
+      "style": 0.545,
+      "layout": 0.765,
+      "paint": 1.025,
+      "raster": 1.496,
+      "total": 4.8309999999999995
+     },
+     "scroll": {
+      "mutation": 0.8999999999941792,
+      "script": 0.8999999999941792,
+      "style": 0.507,
+      "layout": 0.836,
+      "paint": 1.304,
+      "raster": 3.135,
+      "total": 6.681999999994179
+     },
+     "hitTest": 0.006000000000058208
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0.8999999999941792,
+      "script": 0.8999999999941792,
+      "style": 0.5,
+      "layout": 0.524,
+      "paint": 0.879,
+      "raster": 1.53,
+      "total": 4.332999999994179
+     },
+     "edit": {
+      "mutation": 0.10000000000582077,
+      "script": 0.10000000000582077,
+      "style": 0.064,
+      "layout": 0.156,
+      "paint": 0.54,
+      "raster": 0.389,
+      "total": 1.2490000000058208
+     },
+     "insertTop": {
+      "mutation": 0.8000000000174623,
+      "script": 0.8000000000174623,
+      "style": 0.472,
+      "layout": 0.534,
+      "paint": 0.866,
+      "raster": 1.59,
+      "total": 4.262000000017462
+     },
+     "scroll": {
+      "mutation": 0.8999999999941792,
+      "script": 0.8999999999941792,
+      "style": 0.515,
+      "layout": 0.548,
+      "paint": 1.466,
+      "raster": 2.726,
+      "total": 6.154999999994179
+     },
+     "hitTest": 0.007000000000116416
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0.7999999999883585,
+      "script": 0.7999999999883585,
+      "style": 0.489,
+      "layout": 0.651,
+      "paint": 0.941,
+      "raster": 1.634,
+      "total": 4.514999999988358
+     },
+     "edit": {
+      "mutation": 0.10000000000582077,
+      "script": 0.10000000000582077,
+      "style": 0.058,
+      "layout": 0.178,
+      "paint": 0.485,
+      "raster": 0.485,
+      "total": 1.3060000000058207
+     },
+     "insertTop": {
+      "mutation": 0.8000000000174623,
+      "script": 0.8000000000174623,
+      "style": 0.479,
+      "layout": 0.566,
+      "paint": 0.996,
+      "raster": 1.225,
+      "total": 4.066000000017462
+     },
+     "scroll": {
+      "mutation": 0.9000000000232831,
+      "script": 0.9000000000232831,
+      "style": 0.449,
+      "layout": 0.603,
+      "paint": 1.06,
+      "raster": 3.028,
+      "total": 6.040000000023283
+     },
+     "hitTest": 0.006000000000058208
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0.8999999999941792,
+      "script": 0.8999999999941792,
+      "style": 0.47,
+      "layout": 0.625,
+      "paint": 0.845,
+      "raster": 1.466,
+      "total": 4.305999999994179
+     },
+     "edit": {
+      "mutation": 0.10000000000582077,
+      "script": 0.10000000000582077,
+      "style": 0.059,
+      "layout": 0.162,
+      "paint": 0.534,
+      "raster": 0.475,
+      "total": 1.3300000000058207
+     },
+     "insertTop": {
+      "mutation": 0.8999999999941792,
+      "script": 0.8999999999941792,
+      "style": 0.493,
+      "layout": 0.555,
+      "paint": 0.912,
+      "raster": 1.375,
+      "total": 4.234999999994179
+     },
+     "scroll": {
+      "mutation": 0.8000000000174623,
+      "script": 0.8000000000174623,
+      "style": 0.547,
+      "layout": 0.56,
+      "paint": 1.108,
+      "raster": 3.142,
+      "total": 6.1570000000174625
+     },
+     "hitTest": 0.005999999999767169
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0.8999999999941792,
+      "script": 0.8999999999941792,
+      "style": 0.469,
+      "layout": 0.542,
+      "paint": 1.007,
+      "raster": 1.687,
+      "total": 4.604999999994179
+     },
+     "edit": {
+      "mutation": 0.09999999997671694,
+      "script": 0.09999999997671694,
+      "style": 0.108,
+      "layout": 0.268,
+      "paint": 1.206,
+      "raster": 0.519,
+      "total": 2.200999999976717
+     },
+     "insertTop": {
+      "mutation": 1,
+      "script": 1.0,
+      "style": 0.552,
+      "layout": 0.64,
+      "paint": 1.191,
+      "raster": 1.751,
+      "total": 5.134
+     },
+     "scroll": {
+      "mutation": 1.2000000000116415,
+      "script": 1.2000000000116415,
+      "style": 0.568,
+      "layout": 0.887,
+      "paint": 1.167,
+      "raster": 4.777,
+      "total": 8.599000000011642
+     },
+     "hitTest": 0.007999999999883585
+    }
+   ]
+  },
+  "windowed-100000": {
+   "kind": "windowed",
+   "args": [
+    100000
+   ],
+   "runs": [
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 1.1000000000058208,
+      "script": 1.1000000000058208,
+      "style": 0.594,
+      "layout": 0.686,
+      "paint": 0.944,
+      "raster": 1.463,
+      "total": 4.787000000005821
+     },
+     "edit": {
+      "mutation": 0.09999999997671694,
+      "script": 0.09999999997671694,
+      "style": 0.068,
+      "layout": 0.171,
+      "paint": 0.521,
+      "raster": 0.457,
+      "total": 1.316999999976717
+     },
+     "insertTop": {
+      "mutation": 1.1000000000058208,
+      "script": 1.1000000000058208,
+      "style": 0.549,
+      "layout": 0.717,
+      "paint": 0.991,
+      "raster": 1.24,
+      "total": 4.597000000005821
+     },
+     "scroll": {
+      "mutation": 1.1000000000058208,
+      "script": 1.1000000000058208,
+      "style": 0.552,
+      "layout": 0.655,
+      "paint": 0.926,
+      "raster": 3.917,
+      "total": 7.150000000005821
+     },
+     "hitTest": 0.006999999999825377
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0.7999999999883585,
+      "script": 0.7999999999883585,
+      "style": 0.575,
+      "layout": 0.529,
+      "paint": 0.94,
+      "raster": 1.776,
+      "total": 4.619999999988359
+     },
+     "edit": {
+      "mutation": 0,
+      "script": 0.0,
+      "style": 0.056,
+      "layout": 0.156,
+      "paint": 0.575,
+      "raster": 0.436,
+      "total": 1.2229999999999999
+     },
+     "insertTop": {
+      "mutation": 0.7999999999883585,
+      "script": 0.7999999999883585,
+      "style": 0.471,
+      "layout": 0.549,
+      "paint": 0.846,
+      "raster": 1.132,
+      "total": 3.7979999999883582
+     },
+     "scroll": {
+      "mutation": 1,
+      "script": 1.0,
+      "style": 0.462,
+      "layout": 0.575,
+      "paint": 1.017,
+      "raster": 3.508,
+      "total": 6.562
+     },
+     "hitTest": 0.007000000000116416
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 1,
+      "script": 1.0,
+      "style": 0.474,
+      "layout": 0.527,
+      "paint": 1.006,
+      "raster": 1.598,
+      "total": 4.605
+     },
+     "edit": {
+      "mutation": 0.10000000000582077,
+      "script": 0.10000000000582077,
+      "style": 0.06,
+      "layout": 0.154,
+      "paint": 0.465,
+      "raster": 0.395,
+      "total": 1.1740000000058208
+     },
+     "insertTop": {
+      "mutation": 0.8999999999941792,
+      "script": 0.8999999999941792,
+      "style": 0.444,
+      "layout": 0.599,
+      "paint": 0.934,
+      "raster": 1.556,
+      "total": 4.432999999994179
+     },
+     "scroll": {
+      "mutation": 0.8999999999941792,
+      "script": 0.8999999999941792,
+      "style": 0.498,
+      "layout": 0.542,
+      "paint": 0.979,
+      "raster": 3.385,
+      "total": 6.303999999994179
+     },
+     "hitTest": 0.006999999999825377
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 1,
+      "script": 1.0,
+      "style": 0.473,
+      "layout": 0.551,
+      "paint": 0.885,
+      "raster": 1.563,
+      "total": 4.4719999999999995
+     },
+     "edit": {
+      "mutation": 0.10000000000582077,
+      "script": 0.10000000000582077,
+      "style": 0.063,
+      "layout": 0.157,
+      "paint": 0.574,
+      "raster": 0.435,
+      "total": 1.3290000000058206
+     },
+     "insertTop": {
+      "mutation": 1,
+      "script": 1.0,
+      "style": 0.443,
+      "layout": 0.587,
+      "paint": 1.435,
+      "raster": 1.846,
+      "total": 5.311
+     },
+     "scroll": {
+      "mutation": 0.8999999999941792,
+      "script": 0.8999999999941792,
+      "style": 0.564,
+      "layout": 0.557,
+      "paint": 1.006,
+      "raster": 2.865,
+      "total": 5.891999999994179
+     },
+     "hitTest": 0.007000000000116416
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 1.2000000000116415,
+      "script": 1.2000000000116415,
+      "style": 0.57,
+      "layout": 0.803,
+      "paint": 1.174,
+      "raster": 2.117,
+      "total": 5.864000000011641
+     },
+     "edit": {
+      "mutation": 0.20000000001164153,
+      "script": 0.20000000001164153,
+      "style": 0.099,
+      "layout": 0.213,
+      "paint": 0.631,
+      "raster": 0.784,
+      "total": 1.9270000000116416
+     },
+     "insertTop": {
+      "mutation": 1.3999999999941792,
+      "script": 1.3999999999941792,
+      "style": 0.759,
+      "layout": 0.878,
+      "paint": 1.223,
+      "raster": 1.717,
+      "total": 5.976999999994179
+     },
+     "scroll": {
+      "mutation": 1.400000000023283,
+      "script": 1.400000000023283,
+      "style": 0.712,
+      "layout": 0.992,
+      "paint": 1.353,
+      "raster": 3.289,
+      "total": 7.746000000023283
+     },
+     "hitTest": 0.008999999999941792
+    }
+   ]
+  },
+  "all-200-0": {
+   "kind": "allLines",
+   "args": [
+    200,
+    0
+   ],
+   "runs": [
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 3.2000000000116415,
+      "script": 3.2000000000116415,
+      "style": 2.181,
+      "layout": 3.142,
+      "paint": 3.1,
+      "raster": 1.804,
+      "total": 13.427000000011642
+     },
+     "edit": {
+      "mutation": 0.20000000001164153,
+      "script": 0.20000000001164153,
+      "style": 0.131,
+      "layout": 0.421,
+      "paint": 1.537,
+      "raster": 0.0,
+      "total": 2.2890000000116415
+     },
+     "insertTop": {
+      "mutation": 0.10000000000582077,
+      "script": 0.10000000000582077,
+      "style": 0.082,
+      "layout": 0.318,
+      "paint": 3.271,
+      "raster": 1.309,
+      "total": 5.08000000000582
+     },
+     "scroll": {
+      "mutation": 0.10000000000582077,
+      "script": 0.10000000000582077,
+      "style": 0.0,
+      "layout": 0.0,
+      "paint": 0.152,
+      "raster": 1.51,
+      "total": 1.7620000000058207
+     },
+     "hitTest": 0.0029999999998835845
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 2.400000000023283,
+      "script": 2.400000000023283,
+      "style": 1.844,
+      "layout": 2.14,
+      "paint": 2.874,
+      "raster": 1.423,
+      "total": 10.681000000023284
+     },
+     "edit": {
+      "mutation": 0.10000000000582077,
+      "script": 0.10000000000582077,
+      "style": 0.073,
+      "layout": 0.386,
+      "paint": 1.117,
+      "raster": 0.0,
+      "total": 1.6760000000058208
+     },
+     "insertTop": {
+      "mutation": 0,
+      "script": 0.0,
+      "style": 0.071,
+      "layout": 0.276,
+      "paint": 3.601,
+      "raster": 1.901,
+      "total": 5.849
+     },
+     "scroll": {
+      "mutation": 0.10000000000582077,
+      "script": 0.10000000000582077,
+      "style": 0.0,
+      "layout": 0.0,
+      "paint": 0.184,
+      "raster": 1.506,
+      "total": 1.7900000000058207
+     },
+     "hitTest": 0.005
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 2.599999999976717,
+      "script": 2.599999999976717,
+      "style": 1.928,
+      "layout": 2.147,
+      "paint": 3.113,
+      "raster": 1.439,
+      "total": 11.226999999976716
+     },
+     "edit": {
+      "mutation": 0.09999999997671694,
+      "script": 0.09999999997671694,
+      "style": 0.104,
+      "layout": 0.441,
+      "paint": 1.493,
+      "raster": 0.0,
+      "total": 2.137999999976717
+     },
+     "insertTop": {
+      "mutation": 0.09999999997671694,
+      "script": 0.09999999997671694,
+      "style": 0.107,
+      "layout": 0.417,
+      "paint": 3.216,
+      "raster": 1.753,
+      "total": 5.592999999976717
+     },
+     "scroll": {
+      "mutation": 0,
+      "script": 0.0,
+      "style": 0.0,
+      "layout": 0.0,
+      "paint": 0.194,
+      "raster": 1.688,
+      "total": 1.882
+     },
+     "hitTest": 0.003999999999941792
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 2.6000000000058208,
+      "script": 2.6000000000058208,
+      "style": 1.825,
+      "layout": 2.161,
+      "paint": 3.065,
+      "raster": 1.692,
+      "total": 11.343000000005821
+     },
+     "edit": {
+      "mutation": 0.1999999999825377,
+      "script": 0.1999999999825377,
+      "style": 0.071,
+      "layout": 0.277,
+      "paint": 1.178,
+      "raster": 0.0,
+      "total": 1.7259999999825377
+     },
+     "insertTop": {
+      "mutation": 0,
+      "script": 0.0,
+      "style": 0.129,
+      "layout": 0.333,
+      "paint": 3.135,
+      "raster": 1.565,
+      "total": 5.162
+     },
+     "scroll": {
+      "mutation": 0,
+      "script": 0.0,
+      "style": 0.0,
+      "layout": 0.0,
+      "paint": 0.165,
+      "raster": 1.511,
+      "total": 1.676
+     },
+     "hitTest": 0.003000000000174623
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 4.199999999982538,
+      "script": 4.199999999982538,
+      "style": 2.115,
+      "layout": 3.06,
+      "paint": 3.563,
+      "raster": 1.785,
+      "total": 14.722999999982537
+     },
+     "edit": {
+      "mutation": 0.5,
+      "script": 0.5,
+      "style": 0.123,
+      "layout": 0.415,
+      "paint": 1.714,
+      "raster": 0.0,
+      "total": 2.752
+     },
+     "insertTop": {
+      "mutation": 0.10000000000582077,
+      "script": 0.10000000000582077,
+      "style": 0.253,
+      "layout": 0.643,
+      "paint": 4.47,
+      "raster": 1.784,
+      "total": 7.25000000000582
+     },
+     "scroll": {
+      "mutation": 0.1999999999825377,
+      "script": 0.1999999999825377,
+      "style": 0.0,
+      "layout": 0.0,
+      "paint": 0.211,
+      "raster": 1.959,
+      "total": 2.3699999999825376
+     },
+     "hitTest": 0.006999999999825377
+    }
+   ]
+  },
+  "all-500-0": {
+   "kind": "allLines",
+   "args": [
+    500,
+    0
+   ],
+   "runs": [
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 8.699999999982538,
+      "script": 8.699999999982538,
+      "style": 5.882,
+      "layout": 10.378,
+      "paint": 5.594,
+      "raster": 1.868,
+      "total": 32.42199999998254
+     },
+     "edit": {
+      "mutation": 0.10000000000582077,
+      "script": 0.10000000000582077,
+      "style": 0.108,
+      "layout": 0.75,
+      "paint": 1.512,
+      "raster": 0.0,
+      "total": 2.470000000005821
+     },
+     "insertTop": {
+      "mutation": 0.10000000000582077,
+      "script": 0.10000000000582077,
+      "style": 0.108,
+      "layout": 0.747,
+      "paint": 5.483,
+      "raster": 1.88,
+      "total": 8.31800000000582
+     },
+     "scroll": {
+      "mutation": 0,
+      "script": 0.0,
+      "style": 0.0,
+      "layout": 0.0,
+      "paint": 3.385,
+      "raster": 2.914,
+      "total": 6.2989999999999995
+     },
+     "hitTest": 0.005999999999767169
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 8.39999999999418,
+      "script": 8.39999999999418,
+      "style": 5.361,
+      "layout": 5.708,
+      "paint": 5.822,
+      "raster": 1.845,
+      "total": 27.13599999999418
+     },
+     "edit": {
+      "mutation": 0.09999999997671694,
+      "script": 0.09999999997671694,
+      "style": 0.125,
+      "layout": 0.631,
+      "paint": 1.728,
+      "raster": 0.0,
+      "total": 2.583999999976717
+     },
+     "insertTop": {
+      "mutation": 0.09999999997671694,
+      "script": 0.09999999997671694,
+      "style": 0.113,
+      "layout": 0.729,
+      "paint": 5.121,
+      "raster": 1.679,
+      "total": 7.741999999976717
+     },
+     "scroll": {
+      "mutation": 0.10000000000582077,
+      "script": 0.10000000000582077,
+      "style": 0.0,
+      "layout": 0.0,
+      "paint": 3.466,
+      "raster": 3.375,
+      "total": 6.941000000005821
+     },
+     "hitTest": 0.006000000000058208
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 6.199999999982538,
+      "script": 6.199999999982538,
+      "style": 4.554,
+      "layout": 5.32,
+      "paint": 5.713,
+      "raster": 1.571,
+      "total": 23.35799999998254
+     },
+     "edit": {
+      "mutation": 0.10000000000582077,
+      "script": 0.10000000000582077,
+      "style": 0.092,
+      "layout": 0.586,
+      "paint": 1.325,
+      "raster": 0.0,
+      "total": 2.103000000005821
+     },
+     "insertTop": {
+      "mutation": 0.10000000000582077,
+      "script": 0.10000000000582077,
+      "style": 0.101,
+      "layout": 0.701,
+      "paint": 4.892,
+      "raster": 1.532,
+      "total": 7.326000000005821
+     },
+     "scroll": {
+      "mutation": 0,
+      "script": 0.0,
+      "style": 0.0,
+      "layout": 0.0,
+      "paint": 3.268,
+      "raster": 2.506,
+      "total": 5.773999999999999
+     },
+     "hitTest": 0.005
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 5.699999999982538,
+      "script": 5.699999999982538,
+      "style": 4.496,
+      "layout": 5.174,
+      "paint": 5.335,
+      "raster": 1.558,
+      "total": 22.26299999998254
+     },
+     "edit": {
+      "mutation": 0.20000000001164153,
+      "script": 0.20000000001164153,
+      "style": 0.097,
+      "layout": 0.672,
+      "paint": 1.423,
+      "raster": 0.0,
+      "total": 2.3920000000116417
+     },
+     "insertTop": {
+      "mutation": 0.20000000001164153,
+      "script": 0.20000000001164153,
+      "style": 0.098,
+      "layout": 0.631,
+      "paint": 4.984,
+      "raster": 1.559,
+      "total": 7.472000000011642
+     },
+     "scroll": {
+      "mutation": 0,
+      "script": 0.0,
+      "style": 0.0,
+      "layout": 0.0,
+      "paint": 3.128,
+      "raster": 2.748,
+      "total": 5.876
+     },
+     "hitTest": 0.005
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 8.700000000011642,
+      "script": 8.700000000011642,
+      "style": 6.784,
+      "layout": 7.923,
+      "paint": 6.412,
+      "raster": 1.854,
+      "total": 31.67300000001164
+     },
+     "edit": {
+      "mutation": 0.29999999998835847,
+      "script": 0.29999999998835847,
+      "style": 0.112,
+      "layout": 0.769,
+      "paint": 1.745,
+      "raster": 0.0,
+      "total": 2.925999999988359
+     },
+     "insertTop": {
+      "mutation": 0.09999999997671694,
+      "script": 0.09999999997671694,
+      "style": 0.155,
+      "layout": 0.63,
+      "paint": 5.333,
+      "raster": 1.586,
+      "total": 7.803999999976718
+     },
+     "scroll": {
+      "mutation": 0.09999999997671694,
+      "script": 0.09999999997671694,
+      "style": 0.0,
+      "layout": 0.0,
+      "paint": 4.818,
+      "raster": 3.656,
+      "total": 8.573999999976717
+     },
+     "hitTest": 0.005999999999767169
+    }
+   ]
+  },
+  "all-2000-0": {
+   "kind": "allLines",
+   "args": [
+    2000,
+    0
+   ],
+   "runs": [
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 35.5,
+      "script": 35.5,
+      "style": 24.258,
+      "layout": 37.146,
+      "paint": 17.019,
+      "raster": 1.899,
+      "total": 115.822
+     },
+     "edit": {
+      "mutation": 0.5,
+      "script": 0.5,
+      "style": 0.286,
+      "layout": 2.449,
+      "paint": 2.384,
+      "raster": 0.0,
+      "total": 5.619
+     },
+     "insertTop": {
+      "mutation": 0.10000000000582077,
+      "script": 0.10000000000582077,
+      "style": 0.265,
+      "layout": 2.712,
+      "paint": 10.882,
+      "raster": 1.667,
+      "total": 15.62600000000582
+     },
+     "scroll": {
+      "mutation": 0,
+      "script": 0.0,
+      "style": 0.0,
+      "layout": 0.0,
+      "paint": 5.439,
+      "raster": 2.888,
+      "total": 8.327
+     },
+     "hitTest": 0.013999999999941792
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 24.300000000017462,
+      "script": 24.300000000017462,
+      "style": 20.359,
+      "layout": 26.843,
+      "paint": 18.44,
+      "raster": 2.516,
+      "total": 92.45800000001746
+     },
+     "edit": {
+      "mutation": 0.20000000001164153,
+      "script": 0.20000000001164153,
+      "style": 0.273,
+      "layout": 2.564,
+      "paint": 2.591,
+      "raster": 0.0,
+      "total": 5.6280000000116415
+     },
+     "insertTop": {
+      "mutation": 0.09999999997671694,
+      "script": 0.09999999997671694,
+      "style": 0.225,
+      "layout": 3.116,
+      "paint": 11.282,
+      "raster": 2.337,
+      "total": 17.059999999976718
+     },
+     "scroll": {
+      "mutation": 0.10000000000582077,
+      "script": 0.10000000000582077,
+      "style": 0.0,
+      "layout": 0.0,
+      "paint": 4.767,
+      "raster": 2.667,
+      "total": 7.534000000005821
+     },
+     "hitTest": 0.015
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 26.5,
+      "script": 26.5,
+      "style": 18.542,
+      "layout": 21.493,
+      "paint": 15.455,
+      "raster": 1.813,
+      "total": 83.803
+     },
+     "edit": {
+      "mutation": 0.39999999999417923,
+      "script": 0.39999999999417923,
+      "style": 0.354,
+      "layout": 2.758,
+      "paint": 2.324,
+      "raster": 0.0,
+      "total": 5.835999999994179
+     },
+     "insertTop": {
+      "mutation": 0.10000000000582077,
+      "script": 0.10000000000582077,
+      "style": 0.283,
+      "layout": 3.125,
+      "paint": 11.722,
+      "raster": 1.808,
+      "total": 17.03800000000582
+     },
+     "scroll": {
+      "mutation": 0.10000000000582077,
+      "script": 0.10000000000582077,
+      "style": 0.0,
+      "layout": 0.0,
+      "paint": 4.734,
+      "raster": 2.974,
+      "total": 7.808000000005821
+     },
+     "hitTest": 0.017000000000116415
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 23.10000000000582,
+      "script": 23.10000000000582,
+      "style": 17.705,
+      "layout": 21.853,
+      "paint": 15.393,
+      "raster": 1.759,
+      "total": 79.81000000000583
+     },
+     "edit": {
+      "mutation": 0.20000000001164153,
+      "script": 0.20000000001164153,
+      "style": 0.264,
+      "layout": 2.629,
+      "paint": 2.338,
+      "raster": 0.0,
+      "total": 5.431000000011641
+     },
+     "insertTop": {
+      "mutation": 0.10000000000582077,
+      "script": 0.10000000000582077,
+      "style": 0.223,
+      "layout": 2.567,
+      "paint": 11.797,
+      "raster": 1.521,
+      "total": 16.20800000000582
+     },
+     "scroll": {
+      "mutation": 0,
+      "script": 0.0,
+      "style": 0.0,
+      "layout": 0.0,
+      "paint": 4.991,
+      "raster": 2.718,
+      "total": 7.709
+     },
+     "hitTest": 0.015
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 32.89999999999418,
+      "script": 32.89999999999418,
+      "style": 22.047,
+      "layout": 29.874,
+      "paint": 18.23,
+      "raster": 2.636,
+      "total": 105.68699999999419
+     },
+     "edit": {
+      "mutation": 0.29999999998835847,
+      "script": 0.29999999998835847,
+      "style": 0.311,
+      "layout": 2.703,
+      "paint": 2.444,
+      "raster": 0.0,
+      "total": 5.757999999988359
+     },
+     "insertTop": {
+      "mutation": 0.10000000000582077,
+      "script": 0.10000000000582077,
+      "style": 0.227,
+      "layout": 2.633,
+      "paint": 13.301,
+      "raster": 1.669,
+      "total": 17.930000000005823
+     },
+     "scroll": {
+      "mutation": 0.10000000000582077,
+      "script": 0.10000000000582077,
+      "style": 0.0,
+      "layout": 0.0,
+      "paint": 5.629,
+      "raster": 3.049,
+      "total": 8.77800000000582
+     },
+     "hitTest": 0.015
+    }
+   ]
+  },
+  "all-200-3": {
+   "kind": "allLines",
+   "args": [
+    200,
+    3
+   ],
+   "runs": [
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 2.7000000000116415,
+      "script": 2.7000000000116415,
+      "style": 1.928,
+      "layout": 2.167,
+      "paint": 3.375,
+      "raster": 1.925,
+      "total": 12.095000000011641
+     },
+     "edit": {
+      "mutation": 0.10000000000582077,
+      "script": 0.10000000000582077,
+      "style": 0.077,
+      "layout": 0.279,
+      "paint": 1.303,
+      "raster": 0.0,
+      "total": 1.7590000000058208
+     },
+     "insertTop": {
+      "mutation": 0.20000000001164153,
+      "script": 0.20000000001164153,
+      "style": 0.074,
+      "layout": 0.282,
+      "paint": 3.363,
+      "raster": 1.559,
+      "total": 5.478000000011641
+     },
+     "scroll": {
+      "mutation": 0.10000000000582077,
+      "script": 0.10000000000582077,
+      "style": 0.0,
+      "layout": 0.0,
+      "paint": 0.195,
+      "raster": 1.839,
+      "total": 2.1340000000058206
+     },
+     "hitTest": 0.005
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 3.3000000000174623,
+      "script": 3.3000000000174623,
+      "style": 1.884,
+      "layout": 1.997,
+      "paint": 2.954,
+      "raster": 1.501,
+      "total": 11.636000000017463
+     },
+     "edit": {
+      "mutation": 0.20000000001164153,
+      "script": 0.20000000001164153,
+      "style": 0.08,
+      "layout": 0.389,
+      "paint": 1.323,
+      "raster": 0.0,
+      "total": 1.9920000000116416
+     },
+     "insertTop": {
+      "mutation": 0.10000000000582077,
+      "script": 0.10000000000582077,
+      "style": 0.073,
+      "layout": 0.298,
+      "paint": 3.455,
+      "raster": 1.919,
+      "total": 5.845000000005821
+     },
+     "scroll": {
+      "mutation": 0,
+      "script": 0.0,
+      "style": 0.0,
+      "layout": 0.0,
+      "paint": 0.193,
+      "raster": 1.327,
+      "total": 1.52
+     },
+     "hitTest": 0.006000000000058208
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 4,
+      "script": 4.0,
+      "style": 1.916,
+      "layout": 2.131,
+      "paint": 3.208,
+      "raster": 2.225,
+      "total": 13.48
+     },
+     "edit": {
+      "mutation": 0.10000000000582077,
+      "script": 0.10000000000582077,
+      "style": 0.107,
+      "layout": 0.318,
+      "paint": 1.323,
+      "raster": 0.0,
+      "total": 1.8480000000058208
+     },
+     "insertTop": {
+      "mutation": 0.10000000000582077,
+      "script": 0.10000000000582077,
+      "style": 0.108,
+      "layout": 0.476,
+      "paint": 3.938,
+      "raster": 2.12,
+      "total": 6.742000000005821
+     },
+     "scroll": {
+      "mutation": 0.20000000001164153,
+      "script": 0.20000000001164153,
+      "style": 0.0,
+      "layout": 0.0,
+      "paint": 0.196,
+      "raster": 2.157,
+      "total": 2.5530000000116417
+     },
+     "hitTest": 0.005
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 6.5,
+      "script": 6.5,
+      "style": 4.946,
+      "layout": 3.888,
+      "paint": 5.239,
+      "raster": 1.748,
+      "total": 22.320999999999998
+     },
+     "edit": {
+      "mutation": 0.20000000001164153,
+      "script": 0.20000000001164153,
+      "style": 0.076,
+      "layout": 0.36,
+      "paint": 1.279,
+      "raster": 0.0,
+      "total": 1.9150000000116414
+     },
+     "insertTop": {
+      "mutation": 0.09999999997671694,
+      "script": 0.09999999997671694,
+      "style": 0.076,
+      "layout": 0.3,
+      "paint": 3.434,
+      "raster": 1.528,
+      "total": 5.437999999976717
+     },
+     "scroll": {
+      "mutation": 0,
+      "script": 0.0,
+      "style": 0.0,
+      "layout": 0.0,
+      "paint": 0.16,
+      "raster": 1.62,
+      "total": 1.78
+     },
+     "hitTest": 0.005
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 2.6999999999825377,
+      "script": 2.6999999999825377,
+      "style": 2.427,
+      "layout": 2.671,
+      "paint": 3.105,
+      "raster": 1.586,
+      "total": 12.488999999982537
+     },
+     "edit": {
+      "mutation": 0.10000000000582077,
+      "script": 0.10000000000582077,
+      "style": 0.069,
+      "layout": 0.284,
+      "paint": 1.454,
+      "raster": 0.0,
+      "total": 1.9070000000058207
+     },
+     "insertTop": {
+      "mutation": 0.10000000000582077,
+      "script": 0.10000000000582077,
+      "style": 0.122,
+      "layout": 0.46,
+      "paint": 3.729,
+      "raster": 1.501,
+      "total": 5.912000000005821
+     },
+     "scroll": {
+      "mutation": 0.10000000000582077,
+      "script": 0.10000000000582077,
+      "style": 0.0,
+      "layout": 0.0,
+      "paint": 0.17,
+      "raster": 1.736,
+      "total": 2.0060000000058205
+     },
+     "hitTest": 0.006000000000058208
+    }
+   ]
+  },
+  "inline-40x1-block": {
+   "kind": "inlineCost",
+   "args": [
+    40,
+    1,
+    false,
+    true,
+    false
+   ],
+   "runs": [
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0,
+      "script": 0.0,
+      "style": 0.114,
+      "layout": 0.161,
+      "paint": 0.327,
+      "raster": 0.766,
+      "total": 1.368
+     }
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0,
+      "script": 0.0,
+      "style": 0.111,
+      "layout": 0.152,
+      "paint": 0.335,
+      "raster": 0.802,
+      "total": 1.4000000000000001
+     }
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0,
+      "script": 0.0,
+      "style": 0.11,
+      "layout": 0.146,
+      "paint": 0.321,
+      "raster": 0.765,
+      "total": 1.342
+     }
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0.10000000000582077,
+      "script": 0.10000000000582077,
+      "style": 0.107,
+      "layout": 0.145,
+      "paint": 0.278,
+      "raster": 0.787,
+      "total": 1.4170000000058207
+     }
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0,
+      "script": 0.0,
+      "style": 0.198,
+      "layout": 0.295,
+      "paint": 0.548,
+      "raster": 0.767,
+      "total": 1.808
+     }
+    }
+   ]
+  },
+  "inline-40x1-flex": {
+   "kind": "inlineCost",
+   "args": [
+    40,
+    1,
+    true,
+    true,
+    false
+   ],
+   "runs": [
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0,
+      "script": 0.0,
+      "style": 0.113,
+      "layout": 0.142,
+      "paint": 0.259,
+      "raster": 0.869,
+      "total": 1.383
+     }
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0.10000000000582077,
+      "script": 0.10000000000582077,
+      "style": 0.12,
+      "layout": 0.15,
+      "paint": 0.283,
+      "raster": 1.261,
+      "total": 1.9140000000058206
+     }
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0,
+      "script": 0.0,
+      "style": 0.103,
+      "layout": 0.208,
+      "paint": 0.298,
+      "raster": 0.878,
+      "total": 1.4869999999999999
+     }
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0.10000000000582077,
+      "script": 0.10000000000582077,
+      "style": 0.172,
+      "layout": 0.397,
+      "paint": 0.27,
+      "raster": 0.821,
+      "total": 1.7600000000058207
+     }
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0,
+      "script": 0.0,
+      "style": 0.111,
+      "layout": 0.142,
+      "paint": 0.33,
+      "raster": 0.806,
+      "total": 1.389
+     }
+    }
+   ]
+  },
+  "inline-40x2-block": {
+   "kind": "inlineCost",
+   "args": [
+    40,
+    2,
+    false,
+    true,
+    false
+   ],
+   "runs": [
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0.10000000000582077,
+      "script": 0.10000000000582077,
+      "style": 0.212,
+      "layout": 0.156,
+      "paint": 0.352,
+      "raster": 0.809,
+      "total": 1.6290000000058207
+     }
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0,
+      "script": 0.0,
+      "style": 0.404,
+      "layout": 0.733,
+      "paint": 0.84,
+      "raster": 1.407,
+      "total": 3.384
+     }
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0.10000000000582077,
+      "script": 0.10000000000582077,
+      "style": 0.131,
+      "layout": 0.159,
+      "paint": 0.32,
+      "raster": 0.986,
+      "total": 1.6960000000058209
+     }
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0,
+      "script": 0.0,
+      "style": 0.136,
+      "layout": 0.205,
+      "paint": 0.345,
+      "raster": 0.85,
+      "total": 1.536
+     }
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0,
+      "script": 0.0,
+      "style": 0.126,
+      "layout": 0.162,
+      "paint": 0.563,
+      "raster": 0.795,
+      "total": 1.646
+     }
+    }
+   ]
+  },
+  "inline-40x2-flex": {
+   "kind": "inlineCost",
+   "args": [
+    40,
+    2,
+    true,
+    true,
+    false
+   ],
+   "runs": [
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0.10000000000582077,
+      "script": 0.10000000000582077,
+      "style": 0.139,
+      "layout": 0.166,
+      "paint": 0.418,
+      "raster": 0.849,
+      "total": 1.6720000000058208
+     }
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0.10000000000582077,
+      "script": 0.10000000000582077,
+      "style": 0.132,
+      "layout": 0.169,
+      "paint": 0.34,
+      "raster": 0.906,
+      "total": 1.647000000005821
+     }
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0,
+      "script": 0.0,
+      "style": 0.129,
+      "layout": 0.163,
+      "paint": 0.379,
+      "raster": 0.814,
+      "total": 1.4849999999999999
+     }
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0,
+      "script": 0.0,
+      "style": 0.143,
+      "layout": 0.167,
+      "paint": 0.314,
+      "raster": 0.952,
+      "total": 1.576
+     }
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0,
+      "script": 0.0,
+      "style": 0.134,
+      "layout": 0.163,
+      "paint": 0.315,
+      "raster": 1.045,
+      "total": 1.657
+     }
+    }
+   ]
+  },
+  "inline-40x4-block": {
+   "kind": "inlineCost",
+   "args": [
+    40,
+    4,
+    false,
+    true,
+    false
+   ],
+   "runs": [
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0.10000000000582077,
+      "script": 0.10000000000582077,
+      "style": 0.211,
+      "layout": 0.199,
+      "paint": 0.507,
+      "raster": 0.858,
+      "total": 1.8750000000058207
+     }
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0,
+      "script": 0.0,
+      "style": 0.181,
+      "layout": 0.209,
+      "paint": 0.43,
+      "raster": 0.966,
+      "total": 1.786
+     }
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0,
+      "script": 0.0,
+      "style": 0.176,
+      "layout": 0.239,
+      "paint": 0.385,
+      "raster": 2.458,
+      "total": 3.258
+     }
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0,
+      "script": 0.0,
+      "style": 0.32,
+      "layout": 0.298,
+      "paint": 0.422,
+      "raster": 1.273,
+      "total": 2.3129999999999997
+     }
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0.09999999997671694,
+      "script": 0.09999999997671694,
+      "style": 0.172,
+      "layout": 0.196,
+      "paint": 0.41,
+      "raster": 1.011,
+      "total": 1.8889999999767169
+     }
+    }
+   ]
+  },
+  "inline-40x4-flex": {
+   "kind": "inlineCost",
+   "args": [
+    40,
+    4,
+    true,
+    true,
+    false
+   ],
+   "runs": [
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0.10000000000582077,
+      "script": 0.10000000000582077,
+      "style": 0.189,
+      "layout": 0.196,
+      "paint": 0.445,
+      "raster": 0.847,
+      "total": 1.7770000000058208
+     }
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0,
+      "script": 0.0,
+      "style": 0.182,
+      "layout": 0.228,
+      "paint": 0.376,
+      "raster": 0.983,
+      "total": 1.769
+     }
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0,
+      "script": 0.0,
+      "style": 0.181,
+      "layout": 0.215,
+      "paint": 0.38,
+      "raster": 0.942,
+      "total": 1.718
+     }
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0,
+      "script": 0.0,
+      "style": 0.182,
+      "layout": 0.252,
+      "paint": 0.404,
+      "raster": 1.011,
+      "total": 1.849
+     }
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0.09999999997671694,
+      "script": 0.09999999997671694,
+      "style": 0.185,
+      "layout": 0.197,
+      "paint": 0.447,
+      "raster": 0.95,
+      "total": 1.8789999999767169
+     }
+    }
+   ]
+  },
+  "inline-40x8-block": {
+   "kind": "inlineCost",
+   "args": [
+    40,
+    8,
+    false,
+    true,
+    false
+   ],
+   "runs": [
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0,
+      "script": 0.0,
+      "style": 0.647,
+      "layout": 0.316,
+      "paint": 0.563,
+      "raster": 1.032,
+      "total": 2.558
+     }
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0.10000000000582077,
+      "script": 0.10000000000582077,
+      "style": 0.265,
+      "layout": 0.278,
+      "paint": 0.521,
+      "raster": 1.55,
+      "total": 2.7140000000058206
+     }
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0.10000000000582077,
+      "script": 0.10000000000582077,
+      "style": 0.266,
+      "layout": 0.338,
+      "paint": 0.493,
+      "raster": 1.456,
+      "total": 2.6530000000058207
+     }
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0,
+      "script": 0.0,
+      "style": 0.271,
+      "layout": 0.269,
+      "paint": 0.576,
+      "raster": 1.075,
+      "total": 2.191
+     }
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0.09999999997671694,
+      "script": 0.09999999997671694,
+      "style": 0.305,
+      "layout": 0.285,
+      "paint": 0.572,
+      "raster": 1.09,
+      "total": 2.3519999999767167
+     }
+    }
+   ]
+  },
+  "inline-40x8-flex": {
+   "kind": "inlineCost",
+   "args": [
+    40,
+    8,
+    true,
+    true,
+    false
+   ],
+   "runs": [
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0,
+      "script": 0.0,
+      "style": 0.271,
+      "layout": 0.273,
+      "paint": 0.523,
+      "raster": 1.765,
+      "total": 2.832
+     }
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0,
+      "script": 0.0,
+      "style": 0.278,
+      "layout": 0.27,
+      "paint": 0.524,
+      "raster": 1.647,
+      "total": 2.7190000000000003
+     }
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0.10000000000582077,
+      "script": 0.10000000000582077,
+      "style": 0.282,
+      "layout": 0.292,
+      "paint": 0.506,
+      "raster": 0.997,
+      "total": 2.1770000000058207
+     }
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0,
+      "script": 0.0,
+      "style": 0.277,
+      "layout": 0.321,
+      "paint": 0.556,
+      "raster": 1.304,
+      "total": 2.458
+     }
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0.10000000000582077,
+      "script": 0.10000000000582077,
+      "style": 0.364,
+      "layout": 0.333,
+      "paint": 0.555,
+      "raster": 1.13,
+      "total": 2.482000000005821
+     }
+    }
+   ]
+  },
+  "inline-40x16-block": {
+   "kind": "inlineCost",
+   "args": [
+    40,
+    16,
+    false,
+    true,
+    false
+   ],
+   "runs": [
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0.09999999997671694,
+      "script": 0.09999999997671694,
+      "style": 0.451,
+      "layout": 0.509,
+      "paint": 0.79,
+      "raster": 1.886,
+      "total": 3.735999999976717
+     }
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0,
+      "script": 0.0,
+      "style": 0.46,
+      "layout": 0.425,
+      "paint": 0.841,
+      "raster": 1.65,
+      "total": 3.376
+     }
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0.09999999997671694,
+      "script": 0.09999999997671694,
+      "style": 0.456,
+      "layout": 0.534,
+      "paint": 0.793,
+      "raster": 1.826,
+      "total": 3.708999999976717
+     }
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0.10000000000582077,
+      "script": 0.10000000000582077,
+      "style": 0.46,
+      "layout": 0.458,
+      "paint": 1.02,
+      "raster": 1.75,
+      "total": 3.788000000005821
+     }
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0.10000000000582077,
+      "script": 0.10000000000582077,
+      "style": 0.711,
+      "layout": 0.434,
+      "paint": 0.825,
+      "raster": 2.053,
+      "total": 4.1230000000058205
+     }
+    }
+   ]
+  },
+  "inline-40x16-flex": {
+   "kind": "inlineCost",
+   "args": [
+    40,
+    16,
+    true,
+    true,
+    false
+   ],
+   "runs": [
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0,
+      "script": 0.0,
+      "style": 0.468,
+      "layout": 0.556,
+      "paint": 0.87,
+      "raster": 1.668,
+      "total": 3.562
+     }
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0.10000000000582077,
+      "script": 0.10000000000582077,
+      "style": 0.492,
+      "layout": 0.446,
+      "paint": 0.801,
+      "raster": 1.945,
+      "total": 3.784000000005821
+     }
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0.10000000000582077,
+      "script": 0.10000000000582077,
+      "style": 0.453,
+      "layout": 0.472,
+      "paint": 0.979,
+      "raster": 1.602,
+      "total": 3.606000000005821
+     }
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0.10000000000582077,
+      "script": 0.10000000000582077,
+      "style": 0.497,
+      "layout": 0.501,
+      "paint": 1.068,
+      "raster": 1.596,
+      "total": 3.7620000000058207
+     }
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0.10000000000582077,
+      "script": 0.10000000000582077,
+      "style": 0.471,
+      "layout": 0.439,
+      "paint": 0.898,
+      "raster": 2.05,
+      "total": 3.9580000000058204
+     }
+    }
+   ]
+  },
+  "inline-40x32-block": {
+   "kind": "inlineCost",
+   "args": [
+    40,
+    32,
+    false,
+    true,
+    false
+   ],
+   "runs": [
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0,
+      "script": 0.0,
+      "style": 1.197,
+      "layout": 0.895,
+      "paint": 1.651,
+      "raster": 3.674,
+      "total": 7.417
+     }
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0.20000000001164153,
+      "script": 0.20000000001164153,
+      "style": 0.848,
+      "layout": 0.735,
+      "paint": 1.475,
+      "raster": 2.851,
+      "total": 6.109000000011641
+     }
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0.10000000000582077,
+      "script": 0.10000000000582077,
+      "style": 0.861,
+      "layout": 1.122,
+      "paint": 1.423,
+      "raster": 3.124,
+      "total": 6.630000000005821
+     }
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0.10000000000582077,
+      "script": 0.10000000000582077,
+      "style": 0.829,
+      "layout": 0.711,
+      "paint": 1.406,
+      "raster": 3.215,
+      "total": 6.26100000000582
+     }
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0,
+      "script": 0.0,
+      "style": 1.097,
+      "layout": 0.72,
+      "paint": 1.362,
+      "raster": 3.301,
+      "total": 6.48
+     }
+    }
+   ]
+  },
+  "inline-40x32-flex": {
+   "kind": "inlineCost",
+   "args": [
+    40,
+    32,
+    true,
+    true,
+    false
+   ],
+   "runs": [
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0,
+      "script": 0.0,
+      "style": 0.827,
+      "layout": 0.79,
+      "paint": 1.513,
+      "raster": 3.244,
+      "total": 6.3740000000000006
+     }
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0,
+      "script": 0.0,
+      "style": 0.831,
+      "layout": 0.794,
+      "paint": 1.483,
+      "raster": 3.195,
+      "total": 6.303
+     }
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0.09999999997671694,
+      "script": 0.09999999997671694,
+      "style": 0.852,
+      "layout": 0.792,
+      "paint": 1.363,
+      "raster": 3.842,
+      "total": 6.948999999976717
+     }
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0.09999999997671694,
+      "script": 0.09999999997671694,
+      "style": 0.87,
+      "layout": 0.733,
+      "paint": 1.414,
+      "raster": 3.225,
+      "total": 6.341999999976717
+     }
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0.20000000001164153,
+      "script": 0.20000000001164153,
+      "style": 0.904,
+      "layout": 0.836,
+      "paint": 1.887,
+      "raster": 2.969,
+      "total": 6.796000000011642
+     }
+    }
+   ]
+  },
+  "inline-10x8-block": {
+   "kind": "inlineCost",
+   "args": [
+    10,
+    8,
+    false,
+    true,
+    false
+   ],
+   "runs": [
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0.10000000000582077,
+      "script": 0.10000000000582077,
+      "style": 0.119,
+      "layout": 0.118,
+      "paint": 0.28,
+      "raster": 0.166,
+      "total": 0.7830000000058208
+     }
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0.09999999997671694,
+      "script": 0.09999999997671694,
+      "style": 0.116,
+      "layout": 0.115,
+      "paint": 0.264,
+      "raster": 0.162,
+      "total": 0.756999999976717
+     }
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0,
+      "script": 0.0,
+      "style": 0.115,
+      "layout": 0.116,
+      "paint": 0.25,
+      "raster": 0.182,
+      "total": 0.663
+     }
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0,
+      "script": 0.0,
+      "style": 0.119,
+      "layout": 0.116,
+      "paint": 0.274,
+      "raster": 0.206,
+      "total": 0.715
+     }
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0.10000000000582077,
+      "script": 0.10000000000582077,
+      "style": 0.116,
+      "layout": 0.116,
+      "paint": 0.314,
+      "raster": 0.175,
+      "total": 0.8210000000058207
+     }
+    }
+   ]
+  },
+  "inline-10x8-flex": {
+   "kind": "inlineCost",
+   "args": [
+    10,
+    8,
+    true,
+    true,
+    false
+   ],
+   "runs": [
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0.10000000000582077,
+      "script": 0.10000000000582077,
+      "style": 0.121,
+      "layout": 0.123,
+      "paint": 0.362,
+      "raster": 0.17,
+      "total": 0.8760000000058208
+     }
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0,
+      "script": 0.0,
+      "style": 0.128,
+      "layout": 0.12,
+      "paint": 0.273,
+      "raster": 0.183,
+      "total": 0.704
+     }
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0.09999999997671694,
+      "script": 0.09999999997671694,
+      "style": 0.138,
+      "layout": 0.118,
+      "paint": 0.277,
+      "raster": 0.168,
+      "total": 0.800999999976717
+     }
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0,
+      "script": 0.0,
+      "style": 0.118,
+      "layout": 0.122,
+      "paint": 0.299,
+      "raster": 0.178,
+      "total": 0.717
+     }
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0,
+      "script": 0.0,
+      "style": 0.114,
+      "layout": 0.12,
+      "paint": 0.285,
+      "raster": 0.177,
+      "total": 0.696
+     }
+    }
+   ]
+  },
+  "inline-160x8-block": {
+   "kind": "inlineCost",
+   "args": [
+    160,
+    8,
+    false,
+    true,
+    false
+   ],
+   "runs": [
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0.10000000000582077,
+      "script": 0.10000000000582077,
+      "style": 0.959,
+      "layout": 0.973,
+      "paint": 1.442,
+      "raster": 1.094,
+      "total": 4.568000000005821
+     }
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0.09999999997671694,
+      "script": 0.09999999997671694,
+      "style": 0.894,
+      "layout": 0.968,
+      "paint": 1.91,
+      "raster": 1.077,
+      "total": 4.948999999976717
+     }
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0,
+      "script": 0.0,
+      "style": 0.958,
+      "layout": 0.946,
+      "paint": 1.462,
+      "raster": 1.159,
+      "total": 4.525
+     }
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0.09999999997671694,
+      "script": 0.09999999997671694,
+      "style": 0.992,
+      "layout": 0.933,
+      "paint": 1.545,
+      "raster": 0.993,
+      "total": 4.562999999976717
+     }
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0,
+      "script": 0.0,
+      "style": 0.928,
+      "layout": 1.023,
+      "paint": 1.664,
+      "raster": 1.019,
+      "total": 4.6339999999999995
+     }
+    }
+   ]
+  },
+  "inline-160x8-flex": {
+   "kind": "inlineCost",
+   "args": [
+    160,
+    8,
+    true,
+    true,
+    false
+   ],
+   "runs": [
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0.10000000000582077,
+      "script": 0.10000000000582077,
+      "style": 1.192,
+      "layout": 0.968,
+      "paint": 1.525,
+      "raster": 1.278,
+      "total": 5.063000000005821
+     }
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0.09999999997671694,
+      "script": 0.09999999997671694,
+      "style": 0.962,
+      "layout": 1.016,
+      "paint": 1.594,
+      "raster": 0.94,
+      "total": 4.611999999976717
+     }
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0,
+      "script": 0.0,
+      "style": 0.915,
+      "layout": 1.016,
+      "paint": 1.419,
+      "raster": 1.621,
+      "total": 4.971
+     }
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0.10000000000582077,
+      "script": 0.10000000000582077,
+      "style": 0.945,
+      "layout": 0.993,
+      "paint": 1.549,
+      "raster": 1.236,
+      "total": 4.823000000005821
+     }
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0.09999999997671694,
+      "script": 0.09999999997671694,
+      "style": 0.949,
+      "layout": 1.03,
+      "paint": 1.622,
+      "raster": 1.058,
+      "total": 4.758999999976717
+     }
+    }
+   ]
+  },
+  "inline-640x8-block": {
+   "kind": "inlineCost",
+   "args": [
+    640,
+    8,
+    false,
+    true,
+    false
+   ],
+   "runs": [
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0.20000000001164153,
+      "script": 0.20000000001164153,
+      "style": 3.57,
+      "layout": 3.548,
+      "paint": 3.483,
+      "raster": 0.977,
+      "total": 11.778000000011641
+     }
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0.20000000001164153,
+      "script": 0.20000000001164153,
+      "style": 3.53,
+      "layout": 3.609,
+      "paint": 3.558,
+      "raster": 1.359,
+      "total": 12.25600000001164
+     }
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0.1999999999825377,
+      "script": 0.1999999999825377,
+      "style": 3.515,
+      "layout": 3.531,
+      "paint": 3.347,
+      "raster": 1.455,
+      "total": 12.047999999982538
+     }
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0.20000000001164153,
+      "script": 0.20000000001164153,
+      "style": 4.352,
+      "layout": 3.717,
+      "paint": 3.516,
+      "raster": 1.057,
+      "total": 12.842000000011641
+     }
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0.20000000001164153,
+      "script": 0.20000000001164153,
+      "style": 3.544,
+      "layout": 4.019,
+      "paint": 3.879,
+      "raster": 1.245,
+      "total": 12.887000000011643
+     }
+    }
+   ]
+  },
+  "inline-640x8-flex": {
+   "kind": "inlineCost",
+   "args": [
+    640,
+    8,
+    true,
+    true,
+    false
+   ],
+   "runs": [
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0.20000000001164153,
+      "script": 0.20000000001164153,
+      "style": 3.51,
+      "layout": 4.012,
+      "paint": 3.797,
+      "raster": 1.241,
+      "total": 12.76000000001164
+     }
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0.1999999999825377,
+      "script": 0.1999999999825377,
+      "style": 3.583,
+      "layout": 3.679,
+      "paint": 3.7,
+      "raster": 1.077,
+      "total": 12.238999999982537
+     }
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0.20000000001164153,
+      "script": 0.20000000001164153,
+      "style": 3.605,
+      "layout": 3.632,
+      "paint": 3.548,
+      "raster": 1.288,
+      "total": 12.273000000011642
+     }
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0.10000000000582077,
+      "script": 0.10000000000582077,
+      "style": 3.553,
+      "layout": 3.645,
+      "paint": 4.007,
+      "raster": 1.273,
+      "total": 12.57800000000582
+     }
+    },
+    {
+     "inlineBoxes": null,
+     "build": {
+      "mutation": 0.1999999999825377,
+      "script": 0.1999999999825377,
+      "style": 4.167,
+      "layout": 4.151,
+      "paint": 4.353,
+      "raster": 1.158,
+      "total": 14.028999999982537
+     }
+    }
+   ]
+  }
+ }
+}

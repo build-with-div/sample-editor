@@ -2,7 +2,7 @@
 
 The oracle for this sample is the original CodeMirror 6 in pinned
 Chromium. `docs/design.md` section 5 describes the plan. This directory
-holds step 1, the reference capture.
+holds step 1, the reference capture, and the line-rendering benchmark of section 4.
 
 ## Pinned packages
 
@@ -53,8 +53,27 @@ For each case, it writes these files to `fixtures/reference-v1/<case>/`:
 
 `--check` captures again into a temporary directory and fails unless every file matches the manifest.
 
+## The line-rendering benchmark
+
+`bench/` is the Chromium side of the benchmark in design section 4. `bench/lines.js` ports the Div probes `probes/tests/line_elements.rs` and `probes/tests/inline_cost.rs` to plain JavaScript: the same source lines, tokens, colours, element structure and steps. The window cases count the same inline boxes as the probe: 43, 249, 555 and 1,921. `bench/lines.html` loads it; no build step is needed.
+
+`bench/run.py` runs every case in Chrome for Testing 147.0.7727.50 (WSL), at 800x600 and scale 1, with a fresh page for each run of a case. It uses the same Div CDP helpers as `capture.py`.
+
+Each step is timed in two parts:
+- the DOM mutation, timed in the page with `performance.now()`;
+- the frame that follows it, from Chromium's own trace (`devtools.timeline`), split into style (`UpdateLayoutTree`), layout (`Layout`), paint (`PrePaint`, `Paint`, `Layerize`, `Commit`) and raster (`RasterTask`, summed over the raster threads).
+
+Style and layout that the mutation forces, as `scrollTo` does, are counted once. `console.timeStamp` marks bracket the mutation in the trace, so the runner can subtract them.
+
+A warm-up pass over every case runs first and is discarded. Then each case runs five times, and the tables give the median and the range.
+
+```bash
+python3 fidelity/bench/run.py --div /path/to/div --out fidelity/bench/results/chromium-147.json
+```
+
+`bench/results/chromium-147.json` holds every run's numbers, together with the conditions: the Chromium version, the fonts `monospace` resolved to, the machine and the Div tooling commit.
+
 ## Still to come
 
-- The line-rendering benchmark in Chromium (design section 4).
 - The structural and pixel comparisons against the port (M6).
 - Behavioural fidelity (M7).
