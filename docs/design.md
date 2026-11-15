@@ -477,17 +477,18 @@ while Div implements the features. Each is labelled in code with
 | A visually hidden `<textarea>` receives text and IME in place of the `contenteditable` host | 2, 3, 7 | `contenteditable` with `beforeinput`/composition events |
 | Selection and caret drawn by the port's layers, with no native selection | 4 | Selection API and selection painting |
 | Caret and hit-test geometry from a measured monospace cell: x = column × cell. Wrong for wide characters, emoji, ligatures, proportional fonts and bidi | 5, 6 | `Range.getClientRects`, `caretPositionFromPoint` |
-| Inline styles generated from CM6's theme rules: the port reads the rules style-mod renders, matches only selectors of class compounds and descendant combinators against the editor's own elements, and applies their declarations in mount order; it skips 15 of the 76 rules (pseudo-classes, attribute selectors, child combinators, at-rules) and 28 declarations Div's value parser rejects | 14 | 14a stylesheets with the ingestion mode, then 14b: style-mod's `<style>` text used as is |
+| Inline styles generated from CM6's theme rules: the port reads the rules style-mod renders, matches only selectors of class compounds and descendant combinators against every element of the editor after each change to its DOM, applies their declarations in mount order, and then the element's own `style` attribute, which comes after them in the cascade; it skips 15 of the 76 rules (pseudo-classes, attribute selectors, child combinators, at-rules) and 28 declarations Div's value parser rejects | 14 | 14a stylesheets with the ingestion mode, then 14b: style-mod's `<style>` text used as is |
 | Viewport recomputed from `scroll` events and timers | 11, 12, 13 | `ResizeObserver`, `IntersectionObserver`, `requestAnimationFrame` |
 | The editor kept in a block-only subtree; tokens of the same colour merged into one span | 16 | Fast DOM line rendering |
 | Double and triple click timed by the app | 15 | `MouseEvent.detail`, `dblclick` |
 | The `style` attribute serialized by the port (`name: value;`, values as written) and its declarations applied as inline style with Div's value parser; `dom.style[name] = value` rewrites the attribute as the CSSOM does | 22 | `style` applied as inline style, `CSSStyleDeclaration` |
 | Stale attributes removed by name, from those the port wrote before; the structural check reads a fixed list of attribute names | 23 | Attribute enumeration |
 | A line whose children include text nodes is reordered by appending every child in order; dropped nodes are removed with their tiles; the structural check walks the tile tree instead of the DOM | 24 | Node traversal and `insertBefore` over all nodes |
+| A gutter element keeps a list of its markers' DOM nodes (text nodes for line numbers) instead of walking its children; the structural check writes the gutters from the plugin's record | 24 | Node traversal over text nodes |
 | Elements named by kind in the structural check and in `NullWidget.updateDOM` | 25 | `nodeName` |
 | The measure cycle runs synchronously when the view is built and after each update, not in an animation frame; the re-measure after `document.fonts.ready` is skipped | 13, 19 | `requestAnimationFrame`, `document.fonts` |
 | The window's size given in the view's configuration; `scrollBy` on the window does nothing | 26 | `innerWidth`/`innerHeight` |
-| The scale taken as 1 | 27 | `offsetWidth`/`offsetHeight` |
+| The scale taken as 1; the gutters' scroll margins use the bounding rectangle's width for `offsetWidth` | 27 | `offsetWidth`/`offsetHeight` |
 
 ## 8. Phase 2 plan
 
@@ -657,6 +658,34 @@ Progress:
       two `scrolled` tests are ignored with the gap, and a test fails when
       Div starts computing the pair.
   - New Div gaps 26–28 (section 2), with labelled scaffolding (section 7).
+- M6, fourth part: view plugins and gutters.
+  - `extension.ts`: `ViewPlugin`, `PluginValue` and the plugin instances
+    the view creates, updates (eagerly when another part asks for a
+    plugin), tells about redraws and destroys, as `editorview.ts` does.
+    A plugin value lives in the view, so `update` receives the view
+    beside the update. Event handlers, the `decorations` option,
+    measure requests and plugin arguments come with M7.
+  - `gutter.ts`: `gutter`, `gutters`, `GutterMarker`, the line number
+    gutter with its spacer and formatting, `highlightActiveLineGutter`,
+    the line class and widget facets, and the gutters' scroll margins.
+    DOM event handlers come with M7.
+  - The theme's rules now reach every element of the editor, the lines
+    and gutters among them, with the element's `style` attribute applied
+    after them (section 7).
+  - Tests: upstream's `webtest-extension.ts` (5 of 6; plugin arguments
+    wait for M7), adapted where the first measure runs in the
+    constructor (13), and the port's own gutter tests: numbers per
+    line, updates and the spacer after changes, formatting, the active
+    line class, and removal by reconfiguration.
+  - Structural fidelity, measured: the `gutter` and `decorations`
+    editors' whole `outerHTML` equals Chromium's, the `.cm-gutters`
+    element with the spacer and the line numbers of lines 1–36 among
+    it, with `.cm-content`'s attributes compared as a set (23). The
+    `scrolled` editor stays blocked by gap 28. With `overflow-y: auto`
+    added to the case theme, an experiment not kept in the tests, its
+    whole `outerHTML` also equals Chromium's, the gutter for lines
+    122–211 included.
+  - The pixel comparison is the next part.
 
 Every milestone after M5 runs the fidelity checks in section 5 and reports
 measured numbers. The highlighter (M8) follows CM6's design, a parse tree

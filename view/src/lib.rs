@@ -22,10 +22,11 @@
 //!   facets give and the measure cycle; [`Viewport`] and the view state
 //!   behind it (`viewstate.ts`), with gap spacers for what is not drawn;
 //! - themes (`theme.ts`) and [`StyleModule`], a port of `style-mod`, with
-//!   the facets, [`ViewUpdate`] and [`ScrollTarget`] of `extension.ts`.
+//!   the facets, [`ViewUpdate`] and [`ScrollTarget`] of `extension.ts`;
+//! - view plugins ([`ViewPlugin`], `extension.ts`) and gutters
+//!   ([`gutter`], [`line_numbers`], `gutter.ts`).
 //!
-//! Gutters come in the last part of milestone M6; plugins, input and
-//! focus handling in M7.
+//! Input and focus handling come in milestone M7.
 //!
 //! Div lacks some DOM features the content needs; the code that stands in
 //! for them is marked `div-gap` with the gap's number in the sample's
@@ -41,7 +42,9 @@ mod docview;
 mod dom;
 mod editorview;
 mod extension;
+mod gutter;
 mod heightmap;
+mod plugin;
 mod style_mod;
 mod theme;
 mod tile;
@@ -54,13 +57,20 @@ pub use decoration::{
     BlockType, BlockWrapper, BlockWrapperSpec, Decoration, DecorationKind, DecorationSet,
     DecorationSpec, LineSpec, MarkSpec, ReplaceSpec, SpecData, Widget, WidgetSpec, WidgetType,
 };
-pub use dom::{Rect, WindowSize};
+pub use dom::{DomNode, Rect, WindowSize};
 pub use editorview::{EditorView, EditorViewConfig, UpdateListener};
 pub use extension::{
     update_flag, ChangedRange, Margins, ScrollMarginSource, ScrollStrategy, ScrollTarget,
     ViewUpdate,
 };
+pub use gutter::{
+    gutter, gutters, highlight_active_line_gutter, line_numbers, FormatNumber, GutterConfig,
+    GutterMarker, GutterMarkerType, GutterSide, GuttersConfig, InitialSpacer, LineMarker,
+    LineMarkerChange, LineNumberConfig, MarkerSource, UpdateSpacer, WidgetMarker,
+    GUTTER_LINE_CLASS, GUTTER_WIDGET_CLASS, LINE_NUMBER_MARKERS, LINE_NUMBER_WIDGET_MARKER,
+};
 pub use heightmap::{BlockInfo, BlockKind};
+pub use plugin::{PluginSpec, PluginValue, Provide, ViewPlugin};
 pub use style_mod::{StyleModule, StyleSpec, StyleSpecValue};
 pub use viewstate::Viewport;
 
@@ -71,6 +81,7 @@ pub use viewstate::Viewport;
 pub mod __test {
     pub use crate::decoration::add_range;
     pub use crate::docview::ContentTiles;
+    pub use crate::dom::set_style;
     pub use crate::heightmap::{
         clear_height_change_flag, height_change_flag, height_relevant_deco_changes, HeightMap,
         HeightOracle, MeasuredHeights, QueryType,

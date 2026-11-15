@@ -2,11 +2,12 @@
 //! `.cm-scroller`, `.cm-content`), updates and the measure cycle that
 //! reads the layout and moves the viewport.
 //!
-//! Input, focus, the DOM selection, view plugins and the coordinate
-//! queries come with milestone M7 and the gutters; this part draws the
-//! state, keeps the drawing up to date and keeps the viewport on the
-//! visible part of the document.
+//! Input, focus, the DOM selection and the coordinate queries come with
+//! milestone M7; this part draws the state, runs the view plugins (the
+//! gutters among them), keeps the drawing up to date and keeps the
+//! viewport on the visible part of the document.
 
+use std::cell::Ref;
 use std::sync::{Arc, LazyLock};
 
 use div::{Document, Element};
@@ -29,6 +30,7 @@ use crate::extension::{
     OUTER_DECORATIONS, SCROLL_INTO_VIEW,
 };
 use crate::heightmap::BlockInfo;
+use crate::plugin::{PluginInstance, PluginValue, ViewPlugin, VIEW_PLUGIN};
 use crate::style_mod::{InlineRules, StyleSet, StyleSpec};
 use crate::theme::{build_theme, ModuleRef, BASE_THEME, DARK_THEME, NAMES, STYLE_MODULE, THEME};
 use crate::tile::TileKind;
@@ -87,6 +89,7 @@ pub struct EditorView {
     measure_scheduled: bool,
     destroyed: bool,
     window: WindowSize,
+    plugins: Vec<PluginInstance>,
 }
 
 impl EditorView {
@@ -136,7 +139,17 @@ impl EditorView {
             measure_scheduled: false,
             destroyed: false,
             window: config.window,
+            plugins: Vec::new(),
         };
+        view.plugins = view
+            .state()
+            .facet(&VIEW_PLUGIN)
+            .iter()
+            .map(PluginInstance::new)
+            .collect();
+        for plugin in &view.plugins {
+            plugin.update(&view);
+        }
         let state = view.view_state.state.clone();
         view.doc_view = Some(DocView::new(
             document,
@@ -282,6 +295,9 @@ impl EditorView {
             let line_wrapping = self.line_wrapping();
             self.view_state
                 .update(&mut update, scroll_target.clone(), line_wrapping);
+            if !update.empty() {
+                self.update_plugins(&update);
+            }
             let redrawn = {
                 let vs = &mut self.view_state;
                 self.doc_view
@@ -293,6 +309,7 @@ impl EditorView {
                 self.mount_styles()?;
             }
             let attrs_changed = self.update_attrs()?;
+            self.apply_inline_rules()?;
             self.show_announcements(&update.transactions)?;
             Ok((redrawn, attrs_changed))
         })();
@@ -309,6 +326,9 @@ impl EditorView {
             || self.view_state.must_measure_content != MustMeasure::No
         {
             self.request_measure();
+        }
+        if redrawn {
+            self.doc_view_update();
         }
         if !update.empty() {
             for listener in self.state().facet(&UPDATE_LISTENER).clone() {
@@ -332,6 +352,17 @@ impl EditorView {
             let mut view_state = ViewState::new(new_state.clone(), self.window.width);
             view_state.scroll_parent = Some(self.scroll_dom.clone());
             self.view_state = view_state;
+            for plugin in &self.plugins {
+                plugin.destroy();
+            }
+            self.plugins = new_state
+                .facet(&VIEW_PLUGIN)
+                .iter()
+                .map(PluginInstance::new)
+                .collect();
+            for plugin in &self.plugins {
+                plugin.update(self);
+            }
             if let Some(doc_view) = self.doc_view.take() {
                 doc_view.destroy()?;
             }
@@ -349,6 +380,61 @@ impl EditorView {
         result?;
         self.request_measure();
         self.run_requested_measure()
+    }
+
+    // `updatePlugins`: keep the plugins of the new state, create the new
+    // ones, destroy those that left, and give the others the update.
+    fn update_plugins(&mut self, update: &ViewUpdate) {
+        let prev_specs = update.start_state.facet(&VIEW_PLUGIN).clone();
+        let specs = update.state.facet(&VIEW_PLUGIN).clone();
+        if prev_specs != specs {
+            let mut old: Vec<Option<PluginInstance>> = std::mem::take(&mut self.plugins)
+                .into_iter()
+                .map(Some)
+                .collect();
+            let mut plugins = Vec::new();
+            for spec in &specs {
+                match prev_specs.iter().position(|prev| prev == spec) {
+                    Some(found) if old.get(found).is_some_and(Option::is_some) => {
+                        let plugin = old[found].take().expect("checked");
+                        plugin.set_must_update(update);
+                        plugins.push(plugin);
+                    }
+                    _ => plugins.push(PluginInstance::new(spec)),
+                }
+            }
+            for plugin in old.into_iter().flatten() {
+                plugin.destroy();
+            }
+            self.plugins = plugins;
+        } else {
+            for plugin in &self.plugins {
+                plugin.set_must_update(update);
+            }
+        }
+        for plugin in &self.plugins {
+            plugin.update(self);
+        }
+    }
+
+    // `docViewUpdate`: tell the plugins the content was redrawn.
+    fn doc_view_update(&self) {
+        for plugin in &self.plugins {
+            plugin.doc_view_update(self);
+        }
+    }
+
+    /// The value of `plugin` in this view, if it is there and did not
+    /// crash (`plugin`). A plugin with a pending update is updated first.
+    /// While a plugin's own update or creation runs, this returns `None`
+    /// for it.
+    pub fn plugin<V: PluginValue>(&self, plugin: &ViewPlugin<V>) -> Option<Ref<'_, V>> {
+        let instance = self
+            .plugins
+            .iter()
+            .find(|p| p.source().is_some_and(|source| plugin.is(&source)))?;
+        instance.update(self);
+        instance.get::<V>()
     }
 
     /// Schedule a layout measurement (`requestMeasure`).
@@ -447,12 +533,18 @@ impl EditorView {
             }
             self.update_state = UpdateState::Updating;
             if !update.empty() {
+                self.update_plugins(&update);
                 self.update_attrs()?;
                 let vs = &mut self.view_state;
-                self.doc_view
+                let redrawn = self
+                    .doc_view
                     .as_mut()
                     .expect("the view's content")
                     .update(&update, vs)?;
+                self.apply_inline_rules()?;
+                if redrawn {
+                    self.doc_view_update();
+                }
             }
             if !update.viewport_changed() {
                 if self.view_state.editor_height != 0.0 {
@@ -611,18 +703,19 @@ impl EditorView {
         self.apply_inline_rules()
     }
 
-    // div-gap: 14a stylesheets. Apply the mounted rules to the view's own
-    // elements as inline styles (see `InlineRules`). The content's lines
-    // get theirs with the pixel comparison, in the next part of M6.
+    // div-gap: 14a stylesheets. Apply the mounted rules as inline styles
+    // (see `InlineRules`) to every element of the editor, after each
+    // change to its DOM, where a browser would restyle.
     fn apply_inline_rules(&self) -> Result<(), div::Error> {
         if let Some(rules) = &self.inline_rules {
-            for element in [
-                &self.dom,
-                &self.announce_dom,
-                &self.scroll_dom,
-                &self.content_dom,
-            ] {
-                rules.apply(element)?;
+            let mut stack = vec![self.dom.clone()];
+            while let Some(element) = stack.pop() {
+                rules.apply(&element)?;
+                let mut child = element.first_child()?;
+                while let Some(next) = child {
+                    child = next.next_sibling()?;
+                    stack.push(next);
+                }
             }
         }
         Ok(())
@@ -820,6 +913,9 @@ impl EditorView {
         if self.destroyed {
             return Ok(());
         }
+        for plugin in std::mem::take(&mut self.plugins) {
+            plugin.destroy();
+        }
         if let Some(doc_view) = self.doc_view.take() {
             doc_view.destroy()?;
         }
@@ -944,8 +1040,9 @@ impl EditorView {
     /// div-gap: 23 attribute enumeration, 24 node traversal, 25
     /// `nodeName`: the view's own elements are written with the
     /// attributes the view gives them, in the order it first set them,
-    /// and the content's blocks as [`crate::__test::ContentTiles`]
-    /// writes them.
+    /// the content's blocks as [`crate::__test::ContentTiles`] writes
+    /// them, and the gutters from the gutter plugin's own record of its
+    /// elements.
     #[doc(hidden)]
     pub fn outer_html(&self) -> Result<String, div::Error> {
         let mut out = String::new();
@@ -964,7 +1061,10 @@ impl EditorView {
         open_tag_with(&self.announce_dom, &["class", "aria-live"], &mut out)?;
         out.push_str("</div>");
         open_tag_with(&self.scroll_dom, &["tabindex", "class"], &mut out)?;
+        let (before, after) = crate::gutter::gutters_html(self)?;
+        out.push_str(&before);
         out.push_str(&self.content_html_with(&refs(&content_names))?);
+        out.push_str(&after);
         out.push_str("</div></div>");
         Ok(out)
     }

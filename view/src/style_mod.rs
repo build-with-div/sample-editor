@@ -367,6 +367,13 @@ impl InlineRules {
                 }
             }
         }
+        // The element's `style` attribute comes after the rules in the
+        // cascade, so its declarations are applied again over theirs.
+        if let Some(style) = element.get_attribute("style")? {
+            for (property, value) in style.split(';').filter_map(parse_declaration) {
+                element.set_property(property, value)?;
+            }
+        }
         Ok(())
     }
 }
