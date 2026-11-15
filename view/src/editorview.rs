@@ -90,6 +90,8 @@ pub struct EditorView {
     destroyed: bool,
     window: WindowSize,
     plugins: Vec<PluginInstance>,
+    // The view's identity, for a stored multi-stroke key prefix.
+    id: u64,
 }
 
 impl EditorView {
@@ -140,6 +142,7 @@ impl EditorView {
             destroyed: false,
             window: config.window,
             plugins: Vec::new(),
+            id: crate::keymap::next_view_id(),
         };
         view.plugins = view
             .state()
@@ -178,6 +181,10 @@ impl EditorView {
     /// The document this view draws in.
     pub fn document(&self) -> &Document {
         &self.document
+    }
+
+    pub(crate) fn id(&self) -> u64 {
+        self.id
     }
 
     /// The editor's outer element (`dom`).
