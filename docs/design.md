@@ -699,19 +699,26 @@ Progress:
     `--hide-scrollbars`, which Div's own replay harness renders as
     `scrollbar-width: none`. Chromium reserved no scrollbar space: the
     `decorations` line background reaches column 799.
-  - Measured on Windows (`cargo test -p editor-view --test fidelity
-    pixels -- --ignored --nocapture`, 480000 pixels a frame):
+  - Measured (`cargo test -p editor-view --test fidelity pixels --
+    --ignored --nocapture`, 480000 pixels a frame), on a local Windows
+    build and in CI run 43763367578 at `8e691b77`. CI's Windows job
+    printed the same numbers as the local build.
 
-    | case | default: differ / over 32 | as captured: differ / over 32 |
-    | --- | --- | --- |
-    | `plain` | 37730 (7.86%) / 22698 | 29729 (6.19%) / 10324 |
-    | `gutter` | 43523 (9.07%) / 29657 | 37137 (7.74%) / 29300 |
-    | `decorations` | 42652 (8.89%) / 28905 | 36191 (7.54%) / 28493 |
-    | `scrolled` | 59905 (12.48%) / 43728 | 54885 (11.43%) / 46049 |
+    | case | runner | default: differ / over 32 | as captured: differ / over 32 |
+    | --- | --- | --- | --- |
+    | `plain` | Windows | 37730 (7.86%) / 22698 | 29729 (6.19%) / 10324 |
+    | `plain` | Linux | 37598 (7.83%) / 21376 | 28160 (5.87%) / 376 |
+    | `gutter` | Windows | 43523 (9.07%) / 29657 | 37137 (7.74%) / 29300 |
+    | `gutter` | Linux | 43602 (9.08%) / 28496 | 36237 (7.55%) / 28903 |
+    | `decorations` | Windows | 42652 (8.89%) / 28905 | 36191 (7.54%) / 28493 |
+    | `decorations` | Linux | 42734 (8.90%) / 27735 | 35318 (7.36%) / 28075 |
+    | `scrolled` | Windows | 59905 (12.48%) / 43728 | 54885 (11.43%) / 46049 |
+    | `scrolled` | Linux | 60328 (12.57%) / 43209 | 54205 (11.29%) / 45679 |
 
   - What the differences are, as measured:
     - *Default* paints the scroller's 15px scrollbar, which Chromium hid
-      (9000 of `plain`'s differing pixels are the columns x ≥ 785). It also paints
+      (on Windows, 9000 of `plain`'s differing pixels are the columns
+      x ≥ 785). It also paints
       grayscale text, where Chromium's is LCD text.
     - *As captured*, the differing pixels lie within the text's bounds,
       x < 426.
@@ -721,9 +728,11 @@ Progress:
       the gutter loses its right border (column 31, `#ddd` in Chromium),
       and the content starts 1px further left.
       `gutter_right_border_stays_zero_in_div` pins this. With Div's frame
-      moved 1px right, `gutter`'s content differs in 29789 pixels (10123
-      over 32), and `decorations`' in 28926 (9759), the level of `plain`.
-      The gutter's 32 columns differ in 3760 pixels (1306 over 32).
+      moved 1px right, the content falls to the level of `plain`: on
+      Windows `gutter`'s differs in 29789 pixels (10123 over 32) and
+      `decorations`' in 28926 (9759); on Linux in 28247 (389) and 27439
+      (363). The gutter's 32 columns differ in 3760 pixels (1306 over
+      32) on Windows and 3493 (603, at most 38) on Linux.
     - `scrolled` stays at the top of the document (gap 28), so its
       content differs most.
     - The rest is glyph rasterization. Glyph positions and line
@@ -733,8 +742,11 @@ Progress:
       DirectWrite, as Windows Chromium does
       (`GlyphRasterizer::platform`). The captures come from Linux
       Chromium, whose web fonts go through Fontations, so the Windows
-      numbers include that platform difference. CI's Linux step measures
-      against the same rasterizer family.
+      numbers include that platform difference. On Linux, `plain` as
+      captured differs in 28160 pixels, but only 376 by more than 32 and
+      none by more than 72: the text's coverage is close to Chromium's
+      without being equal. Classifying that residue is the fidelity
+      lane's work; the sample does not adjust for it.
   - The decorations themselves match: the line background, the mark's
     colour, the `[w]` widget and the `…` replacement sit where
     Chromium's do.
