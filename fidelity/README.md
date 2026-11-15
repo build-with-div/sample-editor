@@ -73,7 +73,17 @@ python3 fidelity/bench/run.py --div /path/to/div --out fidelity/bench/results/ch
 
 `bench/results/chromium-147.json` holds every run's numbers, together with the conditions: the Chromium version, the fonts `monospace` resolved to, the machine and the Div tooling commit.
 
+## The structural comparison
+
+`view/tests/fidelity.rs` draws each case's document and decorations with the port on Div and compares the `.cm-line` elements with those in the case's `editor.html`, line for line:
+
+```bash
+cargo test -p editor-view --test fidelity
+```
+
+Chromium drew only its viewport's lines; the port has no viewport yet and draws them all, so the test compares the lines Chromium drew with the same lines of the port. Div's DOM cannot yet walk text nodes, list attributes or name tags (design section 2, gaps 23–25), so the port's lines are read in the tile tree's order, with the attributes CodeMirror writes read by name, and tags named by Div's element kind.
+
 ## Still to come
 
-- The structural and pixel comparisons against the port (M6).
+- The structural comparison of the editor's outer elements and gap spacers, and the pixel comparison (M6).
 - Behavioural fidelity (M7).

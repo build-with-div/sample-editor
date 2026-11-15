@@ -51,6 +51,10 @@ The web platform features they depend on:
 | 19 | `document.fonts` (`FontFaceSet.ready`, `loadingdone`) | ● | ● | | |
 | 20 | `EditContext` | | ● (newer) | | |
 | 21 | `<textarea>` editing and rendering parity (Monaco's hidden input) | | ● | | |
+| 22 | The `style` attribute and `CSSStyleDeclaration.cssText` | ● | ● | ● | ● |
+| 23 | Attribute enumeration (`Element.attributes`, `getAttributeNames`) | ● | | ● | ● |
+| 24 | Node traversal and insertion over all node types (`childNodes`, `firstChild`/`nextSibling` including text, `insertBefore` with a text reference, node identity) | ● | ● | ● | ● |
+| 25 | `createElement` for any tag name, and `nodeName`/`tagName` | ● | ● | ● | ● |
 | — | `white-space: pre`/`pre-wrap`, `tab-size`, font metrics, `scrollTop`, `scrollIntoView`, `getBoundingClientRect`, `focus()` | ● | ● | ● | ● |
 
 ● relies on it; ○ uses it in part. The columns come from these packages'
@@ -98,11 +102,15 @@ div-platform, div-macros, div-cli), **components** (div-components). Size:
 | 19 | `document.fonts` | **Missing**: `Document::register_font_face` exists (`document.rs:712`), with no load events | engine (text); framework | S | WPT `css/css-font-loading/` |
 | 20 | `EditContext` (after 2, decision 11) | **Missing** | framework (platform, events); engine | L | WPT `editing/edit-context/` |
 | 21 | `<textarea>` parity | **Partial**: no caret, selection or composition paint (`div-paint/src/painter.rs:3816-3852`), content does not scroll, Up/Down do nothing, undo puts the caret at the end, O(document) work per keystroke (section 4) | engine (forms, paint) | M | harness, WPT `html/semantics/forms/the-textarea-element/` |
+| 22 | `style` attribute, `CSSStyleDeclaration.cssText` | **Missing**: a `style` attribute is stored like any other and not applied; styles come only from typed `set_property`/`apply_style` (`divui/src/element.rs:279,338,598`) and the `style!` macro. CM6 writes `style` for `tab-size`, the gap spacers' heights, gutter sizes and decoration attributes | framework (attribute to inline style), engine (declaration parsing, which `typed_style::parse_literal` partly offers) | S–M | WPT `css/cssom/`; the M5 captures |
+| 23 | Attribute enumeration | **Missing**: `get_attribute`/`set_attribute`/`remove_attribute` by name only (`divui/src/element.rs:598-677`). CM6's `setAttrs` removes the attributes not in the new set, `getAttrs` reads them for compositions, and the structural fidelity check serializes elements | framework | S | WPT `dom/nodes/attributes.html` |
+| 24 | Node traversal and insertion over all node types | **Partial**: `first_child`/`next_sibling` skip text nodes (`divui/src/element.rs:185-213`); `insert_before` takes an element reference, `insert_text_before` a text node before an element (`:150,252`); no `childNodes`, no node identity to key a map. The engine already has these for any node handle (`div-engine/src/lib.rs:981,1021`). CM6's tile sync walks and reorders a line's text and element children, and maps DOM positions back to tiles | framework | S | WPT `dom/nodes/Node-*` |
+| 25 | `createElement` for any tag, `nodeName` | **Partial**: `Element::create` knows a fixed tag list and fails on others (`divui/src/element.rs:1206-1251`), so mark decorations with `tagName` `b`, `code`, `var` or a custom element, and block wrappers like `navigation`, cannot be drawn; `kind()` reports a kind several tags share, so `em`, `strong` and `span` read alike | engine (DOM: unknown elements as `HTMLUnknownElement`), framework | S | WPT `dom/nodes/Document-createElement*` |
 
 Priority for the code editor, CM6 first: **16** (without it the DOM
 approach cannot be interactive), **2, 3, 4, 5, 6** (the editing host and
 selection geometry), **14** (CM6 is styled entirely by injected
-stylesheets), **7, 8, 10, 11, 13**, then **15, 17**. Monaco additionally
+stylesheets) with **22**, **7, 8, 10, 11, 13**, then **15, 17**, **23–25**. Monaco additionally
 needs **21** (or **20**) and **18**. Rich text (ProseMirror, Lexical)
 needs the same plus **9** and `text/html` in **8**.
 
@@ -466,6 +474,10 @@ while Div implements the features. Each is labelled in code with
 | Viewport recomputed from `scroll` events and timers | 11, 12, 13 | `ResizeObserver`, `IntersectionObserver`, `requestAnimationFrame` |
 | The editor kept in a block-only subtree; tokens of the same colour merged into one span | 16 | Fast DOM line rendering |
 | Double and triple click timed by the app | 15 | `MouseEvent.detail`, `dblclick` |
+| The `style` attribute written as a plain attribute | 22 | `style` applied as inline style |
+| Stale attributes removed by name, from those the port wrote before; the structural check reads a fixed list of attribute names | 23 | Attribute enumeration |
+| A line whose children include text nodes is reordered by appending every child in order; dropped nodes are removed with their tiles; the structural check walks the tile tree instead of the DOM | 24 | Node traversal and `insertBefore` over all nodes |
+| Elements named by kind in the structural check and in `NullWidget.updateDOM` | 25 | `nodeName` |
 
 ## 8. Phase 2 plan
 
@@ -562,6 +574,37 @@ Progress:
     for a replaced node compares the node kinds.
   - The widget methods that build DOM come with the view's DOM in the next
     part.
+- M6, second part: the content tile tree on Div's DOM.
+  - `tile.ts` and `buildtile.ts`: the tiles for the document, block
+    wrappers, lines, marks, text, widgets and widget buffers, and the
+    update that copies unchanged tiles from the old tree, reuses old DOM
+    and redraws only changed ranges, then syncs the DOM. Tiles live in an
+    arena and refer to each other by id.
+  - The drawing part of `docview.ts` (`ContentTiles`, internal until the
+    editor view is ported): the changed ranges from a change set and from
+    decoration and block wrapper differences, and `destroyDropped`, which
+    here also removes the dropped DOM nodes, since Div does not collect
+    them.
+  - `WidgetType` gains `to_dom`, `update_dom` and `destroy`. `to_dom`
+    receives the document until the view exists.
+  - Left for later parts: compositions, DOM-to-position mapping and
+    coordinates (`domPosFor`, `coordsIn`, `resolveInline`), which need the
+    view's input handling and Range geometry (5).
+  - Tests: 83 ported from `webtest-draw.ts` and
+    `webtest-draw-decoration.ts`, adapted where Div cannot build or name
+    a tag or walk text nodes, plus port-specific checks that updates free
+    the tiles and DOM they drop. Upstream's random tests run with a
+    fixed-seed generator and compare the whole document, as there is no
+    viewport yet.
+  - Structural fidelity (section 5 step 3), measured: the `.cm-line`
+    elements drawn on Div equal Chromium's capture, read from Div's DOM in
+    tile order, for every line Chromium drew: 36 of 36 for `plain`,
+    `gutter` and `decorations` (a line decoration, a mark, an inline
+    widget and a replace widget with their buffers) and 90 of 90 for
+    `scrolled` (lines 122–211). The comparison covers the lines only; the
+    editor's outer elements and the gap spacers come with the editor view
+    and the viewport.
+  - New Div gaps 22–25 (section 2), with labelled scaffolding (section 7).
 
 Every milestone after M5 runs the fidelity checks in section 5 and reports
 measured numbers. The highlighter (M8) follows CM6's design, a parse tree

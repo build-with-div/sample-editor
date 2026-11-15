@@ -385,6 +385,7 @@ version = "0.0.0"
 name = "editor-view"
 version = "0.0.0"
 dependencies = [
+ "divui",
  "editor-state",
 ]
 
