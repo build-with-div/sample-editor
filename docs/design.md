@@ -477,7 +477,7 @@ while Div implements the features. Each is labelled in code with
 | A visually hidden `<textarea>` receives text and IME in place of the `contenteditable` host | 2, 3, 7 | `contenteditable` with `beforeinput`/composition events |
 | Selection and caret drawn by the port's layers, with no native selection | 4 | Selection API and selection painting |
 | Caret and hit-test geometry from a measured monospace cell: x = column × cell. Wrong for wide characters, emoji, ligatures, proportional fonts and bidi | 5, 6 | `Range.getClientRects`, `caretPositionFromPoint` |
-| Inline styles generated from CM6's theme rules: the port reads the rules style-mod renders, matches only selectors of class compounds and descendant combinators against every element of the editor after each change to its DOM, applies their declarations in mount order, and then the element's own `style` attribute, which comes after them in the cascade; it skips 15 of the 76 rules (pseudo-classes, attribute selectors, child combinators, at-rules) and 28 declarations Div's value parser rejects | 14 | 14a stylesheets with the ingestion mode, then 14b: style-mod's `<style>` text used as is |
+| Inline styles generated from CM6's theme rules: the port reads the rules style-mod renders, matches only selectors of class compounds and descendant combinators against every element of the editor after each change to its DOM, applies their declarations in mount order, ignoring specificity (which loses the gutter's 1px right border, as the pixel comparison shows), and then the element's own `style` attribute, which comes after them in the cascade; it skips 15 of the 76 rules (pseudo-classes, attribute selectors, child combinators, at-rules) and 28 declarations Div's value parser rejects | 14 | 14a stylesheets with the ingestion mode, then 14b: style-mod's `<style>` text used as is |
 | Viewport recomputed from `scroll` events and timers | 11, 12, 13 | `ResizeObserver`, `IntersectionObserver`, `requestAnimationFrame` |
 | The editor kept in a block-only subtree; tokens of the same colour merged into one span | 16 | Fast DOM line rendering |
 | Double and triple click timed by the app | 15 | `MouseEvent.detail`, `dblclick` |
@@ -685,7 +685,60 @@ Progress:
     added to the case theme, an experiment not kept in the tests, its
     whole `outerHTML` also equals Chromium's, the gutter for lines
     122–211 included.
-  - The pixel comparison is the next part.
+- M6, fifth part: the pixel comparison.
+  - `pixels_against_chromium` in `view/tests/fidelity.rs` renders each
+    case with `Document::render_to_bitmap`, composites the frame over
+    white, and compares it with the case's `chromium.png`, pixel by
+    pixel. It is a measurement, not a gate: it is ignored by default,
+    and a CI step prints it on both runners.
+  - It measures each case twice. *Default* is the document the other
+    tests mount. *As captured* reproduces the capture's two conditions
+    with Div's public API. Chromium ran on Linux with the real-font
+    Fontconfig profile, which Div replays with
+    `RasterConfiguration::chromium_linux_lcd()`. Chromium also ran with
+    `--hide-scrollbars`, which Div's own replay harness renders as
+    `scrollbar-width: none`. Chromium reserved no scrollbar space: the
+    `decorations` line background reaches column 799.
+  - Measured on Windows (`cargo test -p editor-view --test fidelity
+    pixels -- --ignored --nocapture`, 480000 pixels a frame):
+
+    | case | default: differ / over 32 | as captured: differ / over 32 |
+    | --- | --- | --- |
+    | `plain` | 37730 (7.86%) / 22698 | 29729 (6.19%) / 10324 |
+    | `gutter` | 43523 (9.07%) / 29657 | 37137 (7.74%) / 29300 |
+    | `decorations` | 42652 (8.89%) / 28905 | 36191 (7.54%) / 28493 |
+    | `scrolled` | 59905 (12.48%) / 43728 | 54885 (11.43%) / 46049 |
+
+  - What the differences are, as measured:
+    - *Default* paints the scroller's 15px scrollbar, which Chromium hid
+      (9000 of `plain`'s differing pixels are the columns x ≥ 785). It also paints
+      grayscale text, where Chromium's is LCD text.
+    - *As captured*, the differing pixels lie within the text's bounds,
+      x < 426.
+    - The light theme's `border: 0px solid #ddd` on `.cm-gutters` and
+      `border-right-width: 1px` on `.cm-gutters.cm-gutters-before` reach
+      the gutter in sheet order, not by specificity (section 7, 14a). So
+      the gutter loses its right border (column 31, `#ddd` in Chromium),
+      and the content starts 1px further left.
+      `gutter_right_border_stays_zero_in_div` pins this. With Div's frame
+      moved 1px right, `gutter`'s content differs in 29789 pixels (10123
+      over 32), and `decorations`' in 28926 (9759), the level of `plain`.
+      The gutter's 32 columns differ in 3760 pixels (1306 over 32).
+    - `scrolled` stays at the top of the document (gap 28), so its
+      content differs most.
+    - The rest is glyph rasterization. Glyph positions and line
+      placement agree: the best whole-pixel alignment of `plain`'s text
+      is no shift, its ink rows start at the same y, and its LCD fringes
+      point the same way. On Windows, Div rasterizes web fonts with
+      DirectWrite, as Windows Chromium does
+      (`GlyphRasterizer::platform`). The captures come from Linux
+      Chromium, whose web fonts go through Fontations, so the Windows
+      numbers include that platform difference. CI's Linux step measures
+      against the same rasterizer family.
+  - The decorations themselves match: the line background, the mark's
+    colour, the `[w]` widget and the `…` replacement sit where
+    Chromium's do.
+  - No new Div gaps.
 
 Every milestone after M5 runs the fidelity checks in section 5 and reports
 measured numbers. The highlighter (M8) follows CM6's design, a parse tree

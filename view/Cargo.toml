@@ -5,8 +5,12 @@ edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
 publish = false
-description = "Port of @codemirror/view 6.43.15 (decorations, the height map and the content tile tree so far) to Rust"
+description = "Port of @codemirror/view 6.43.15, the view layer of CodeMirror 6, to Rust on Div"
 
 [dependencies]
 divui.workspace = true
 editor-state = { path = "../state" }
+
+[dev-dependencies]
+# The version Div pins, already in the lock; decodes the Chromium captures.
+png = "=0.18.1"

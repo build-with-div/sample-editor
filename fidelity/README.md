@@ -90,7 +90,16 @@ The editor tests mount an `EditorView` as `pages/main.mjs` does: an 800x600 docu
 
 The attributes of `.cm-content` are compared as a set: Div cannot list attributes (gap 23), so the order the port writes is its serializer's. The `scrolled` editor tests are ignored until Div computes `overflow-y` as `auto` beside `overflow-x: auto` (gap 28); a test fails when it does.
 
+## The pixel comparison
+
+`pixels_against_chromium` renders each case on Div and compares the frame with the case's `chromium.png`. It is a measurement, not a gate, so it is ignored by default:
+
+```bash
+cargo test -p editor-view --test fidelity pixels -- --ignored --nocapture
+```
+
+It prints, per case, the differing pixels, those with a channel more than 32 apart, the largest difference and their bounds. It measures twice: in the document the other tests mount, and under the capture's conditions. Those are Linux Chromium's LCD text profile (`RasterConfiguration::chromium_linux_lcd()`) and hidden scrollbars (`scrollbar-width: none` on the scroller, as Div's replay harness renders Chromium's `--hide-scrollbars`). For the cases with line numbers, it also splits the gutter from the content, and measures the content again with Div's frame moved 1px right. With `PIXEL_OUT` set to a directory, it writes each frame and a difference image there. CI runs it on both runners; design section 8 records the numbers and what they come from.
+
 ## Still to come
 
-- The pixel comparison (M6).
 - Behavioural fidelity (M7).
