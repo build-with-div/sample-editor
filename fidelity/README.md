@@ -81,9 +81,16 @@ python3 fidelity/bench/run.py --div /path/to/div --out fidelity/bench/results/ch
 cargo test -p editor-view --test fidelity
 ```
 
-Chromium drew only its viewport's lines; the port has no viewport yet and draws them all, so the test compares the lines Chromium drew with the same lines of the port. Div's DOM cannot yet walk text nodes, list attributes or name tags (design section 2, gaps 23–25), so the port's lines are read in the tile tree's order, with the attributes CodeMirror writes read by name, and tags named by Div's element kind.
+The line tests draw the whole document with the part of `DocView` that draws, and compare the lines Chromium drew with the same lines of the port. Div's DOM cannot yet walk text nodes, list attributes or name tags (design section 2, gaps 23–25), so the port's lines are read in the tile tree's order, with the attributes CodeMirror writes read by name, and tags named by Div's element kind.
+
+The editor tests mount an `EditorView` as `pages/main.mjs` does: an 800x600 document, Geist Mono registered from `reference/pages/fonts`, the page's body styles, the case's theme and decorations, and the case's scroll target. They compare:
+- the editor's whole `outerHTML` for `plain`;
+- `.cm-content`, with the viewport's lines and the gap spacers, for `plain`, `gutter` and `decorations`;
+- the selectors of the rules style-mod mounts against `styles.css`'s first stylesheet.
+
+The attributes of `.cm-content` are compared as a set: Div cannot list attributes (gap 23), so the order the port writes is its serializer's. The `scrolled` editor tests are ignored until Div computes `overflow-y` as `auto` beside `overflow-x: auto` (gap 28); a test fails when it does.
 
 ## Still to come
 
-- The structural comparison of the editor's outer elements and gap spacers, and the pixel comparison (M6).
+- The gutters and the pixel comparison (M6).
 - Behavioural fidelity (M7).

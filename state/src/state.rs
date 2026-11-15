@@ -259,6 +259,12 @@ impl EditorState {
         Some(self.get_addr(addr))
     }
 
+    /// Whether `other` is this same state, not just an equal one, as
+    /// JavaScript's `==` compares states.
+    pub fn ptr_eq(&self, other: &EditorState) -> bool {
+        Arc::ptr_eq(&self.0, &other.0)
+    }
+
     /// The document.
     pub fn doc(&self) -> &Text {
         &self.0.doc

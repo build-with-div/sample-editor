@@ -1,5 +1,16 @@
-//! Part of `extension.ts`: [`ChangedRange`]. The view plugins, the update
-//! object and the view's facets come with the view.
+//! Part of `extension.ts`: [`ChangedRange`], the view's update object
+//! ([`ViewUpdate`]), scroll targets and the view's facets. View plugins
+//! come with the gutters, which are the first to need them.
+
+use std::sync::LazyLock;
+
+use editor_state::{
+    Callback, ChangeDesc, ChangeSet, EditorSelection, EditorState, Facet, FacetConfig, RangeSet,
+    SelectionRange, StateEffectType, Transaction,
+};
+
+use crate::attributes::Attrs;
+use crate::decoration::{BlockWrapper, DecorationSet};
 
 /// A changed range, in positions of the old (`a`) and the new (`b`)
 /// document (`ChangedRange`).
@@ -105,4 +116,273 @@ impl ChangedRange {
         }
         result
     }
+}
+
+/// The flags of a [`ViewUpdate`] (`UpdateFlag`).
+pub mod update_flag {
+    /// The editor gained or lost focus.
+    pub const FOCUS: u32 = 1;
+    /// The height of the content changed.
+    pub const HEIGHT: u32 = 2;
+    /// The viewport changed.
+    pub const VIEWPORT: u32 = 4;
+    /// The viewport moved to cover a different part of the document.
+    pub const VIEWPORT_MOVED: u32 = 8;
+    /// The editor's geometry changed.
+    pub const GEOMETRY: u32 = 16;
+}
+
+/// Describes an update of the view (`ViewUpdate`).
+#[derive(Clone)]
+pub struct ViewUpdate {
+    /// The changes made to the document by this update.
+    pub changes: ChangeSet,
+    /// The state before the update.
+    pub start_state: EditorState,
+    /// The new state.
+    pub state: EditorState,
+    /// The transactions in this update. May be empty.
+    pub transactions: Vec<Transaction>,
+    /// The update's [`update_flag`]s.
+    pub flags: u32,
+    /// The ranges of the document the changes touch.
+    pub changed_ranges: Vec<ChangedRange>,
+}
+
+impl ViewUpdate {
+    /// An update from `start_state` to `state` by `transactions`
+    /// (`ViewUpdate.create`).
+    pub fn create(
+        start_state: &EditorState,
+        state: &EditorState,
+        transactions: Vec<Transaction>,
+    ) -> ViewUpdate {
+        let mut changes = ChangeSet::empty(start_state.doc().len());
+        for tr in &transactions {
+            changes = changes.compose(tr.changes());
+        }
+        let mut changed_ranges = Vec::new();
+        changes.iter_changed_ranges(
+            |from_a, to_a, from_b, to_b| {
+                changed_ranges.push(ChangedRange::new(from_a, to_a, from_b, to_b))
+            },
+            false,
+        );
+        ViewUpdate {
+            changes,
+            start_state: start_state.clone(),
+            state: state.clone(),
+            transactions,
+            flags: 0,
+            changed_ranges,
+        }
+    }
+
+    /// Whether the viewport or visible ranges changed (`viewportChanged`).
+    pub fn viewport_changed(&self) -> bool {
+        self.flags & update_flag::VIEWPORT > 0
+    }
+
+    /// Whether the viewport moved to a different part of the document
+    /// (`viewportMoved`).
+    pub fn viewport_moved(&self) -> bool {
+        self.flags & update_flag::VIEWPORT_MOVED > 0
+    }
+
+    /// Whether the height of a block or the document changed
+    /// (`heightChanged`).
+    pub fn height_changed(&self) -> bool {
+        self.flags & update_flag::HEIGHT > 0
+    }
+
+    /// Whether the document changed or the size of the editor or its
+    /// content may have (`geometryChanged`).
+    pub fn geometry_changed(&self) -> bool {
+        self.doc_changed() || self.flags & (update_flag::GEOMETRY | update_flag::HEIGHT) > 0
+    }
+
+    /// Whether the editor gained or lost focus (`focusChanged`).
+    pub fn focus_changed(&self) -> bool {
+        self.flags & update_flag::FOCUS > 0
+    }
+
+    /// Whether the document changed (`docChanged`).
+    pub fn doc_changed(&self) -> bool {
+        !self.changes.is_empty()
+    }
+
+    /// Whether a transaction set the selection (`selectionSet`).
+    pub fn selection_set(&self) -> bool {
+        self.transactions.iter().any(|tr| tr.selection().is_some())
+    }
+
+    /// Whether nothing happened (`empty`).
+    pub fn empty(&self) -> bool {
+        self.flags == 0 && self.transactions.is_empty()
+    }
+}
+
+/// How to scroll a position into view (`ScrollStrategy`).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ScrollStrategy {
+    /// Scroll as little as possible.
+    Nearest,
+    /// Put the position at the start of the view.
+    Start,
+    /// Put it at the end.
+    End,
+    /// Center it.
+    Center,
+}
+
+/// A request to scroll a range into view (`ScrollTarget`).
+#[derive(Clone, Debug, PartialEq)]
+pub struct ScrollTarget {
+    /// The range to show.
+    pub range: SelectionRange,
+    /// The vertical strategy.
+    pub y: ScrollStrategy,
+    /// The horizontal strategy.
+    pub x: ScrollStrategy,
+    /// The vertical margin.
+    pub y_margin: f64,
+    /// The horizontal margin.
+    pub x_margin: f64,
+    /// Whether this is a scroll snapshot rather than a request: `range`
+    /// is in the reference line, `y_margin` the distance from its top to
+    /// the editor's and `x_margin` the editor's `scrollLeft`.
+    pub is_snapshot: bool,
+}
+
+impl ScrollTarget {
+    /// A scroll target (`new ScrollTarget`).
+    pub fn new(
+        range: SelectionRange,
+        y: ScrollStrategy,
+        x: ScrollStrategy,
+        y_margin: f64,
+        x_margin: f64,
+    ) -> ScrollTarget {
+        ScrollTarget {
+            range,
+            y,
+            x,
+            y_margin,
+            x_margin,
+            is_snapshot: false,
+        }
+    }
+
+    /// Map the target through changes (`map`).
+    pub fn map(&self, changes: &ChangeDesc) -> ScrollTarget {
+        if changes.is_empty() {
+            return self.clone();
+        }
+        ScrollTarget {
+            range: self.range.map(changes, -1),
+            ..self.clone()
+        }
+    }
+
+    /// Clip the target to the document of `state` (`clip`).
+    pub fn clip(&self, state: &EditorState) -> ScrollTarget {
+        if self.range.to() <= state.doc().len() {
+            return self.clone();
+        }
+        ScrollTarget {
+            range: EditorSelection::cursor(state.doc().len()),
+            ..self.clone()
+        }
+    }
+}
+
+/// The effect that scrolls a target into view (`scrollIntoView`).
+pub(crate) static SCROLL_INTO_VIEW: LazyLock<StateEffectType<ScrollTarget>> = LazyLock::new(|| {
+    StateEffectType::define_with_map(|t: &ScrollTarget, ch: &ChangeDesc| Some(t.map(ch)))
+});
+
+/// Whether the editor is editable (`editable`).
+pub(crate) static EDITABLE: LazyLock<Facet<bool, bool>> = LazyLock::new(|| {
+    Facet::define_with(FacetConfig::new(|values: &[bool]| {
+        values.first().copied().unwrap_or(true)
+    }))
+});
+
+/// Whether the native selection is hidden (`nativeSelectionHidden`).
+pub(crate) static NATIVE_SELECTION_HIDDEN: LazyLock<Facet<bool, bool>> = LazyLock::new(|| {
+    Facet::define_with(FacetConfig::new(|values: &[bool]| values.contains(&true)))
+});
+
+/// Decorations drawn in the content (`decorations`). Upstream also takes
+/// functions of the view, which come with view plugins.
+pub(crate) static DECORATIONS: LazyLock<Facet<DecorationSet>> = LazyLock::new(Facet::define);
+
+/// Decorations drawn around the content's other decorations
+/// (`outerDecorations`). Upstream also takes functions of the view.
+pub(crate) static OUTER_DECORATIONS: LazyLock<Facet<DecorationSet>> = LazyLock::new(Facet::define);
+
+/// Block wrappers (`blockWrappers`). Upstream also takes functions of the
+/// view.
+pub(crate) static BLOCK_WRAPPERS: LazyLock<Facet<RangeSet<BlockWrapper>>> =
+    LazyLock::new(Facet::define);
+
+/// Attributes for the content element (`contentAttributes`). Upstream
+/// also takes functions of the view, which come with view plugins.
+pub(crate) static CONTENT_ATTRIBUTES: LazyLock<Facet<Attrs>> = LazyLock::new(Facet::define);
+
+/// Attributes for the editor element (`editorAttributes`). Upstream also
+/// takes functions of the view.
+pub(crate) static EDITOR_ATTRIBUTES: LazyLock<Facet<Attrs>> = LazyLock::new(Facet::define);
+
+/// The margin to keep around the cursor when a transaction scrolls it into
+/// view (`EditorView.cursorScrollMargin`): `(x, y)`.
+pub(crate) static CURSOR_SCROLL_MARGIN: LazyLock<Facet<(f64, f64), (f64, f64)>> =
+    LazyLock::new(|| {
+        Facet::define_with(FacetConfig::new(|values: &[(f64, f64)]| {
+            // The last value wins; a single number upstream is `(n, n)`.
+            values.last().copied().unwrap_or((5.0, 5.0))
+        }))
+    });
+
+/// Margins, each optional (`Partial<Rect>`).
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub struct Margins {
+    /// The left margin.
+    pub left: Option<f64>,
+    /// The right margin.
+    pub right: Option<f64>,
+    /// The top margin.
+    pub top: Option<f64>,
+    /// The bottom margin.
+    pub bottom: Option<f64>,
+}
+
+/// A source of extra margins around scroll targets (`scrollMargins`).
+pub type ScrollMarginSource = Callback<dyn Fn(&crate::EditorView) -> Option<Margins> + Send + Sync>;
+
+/// Extra margins around scroll targets (`scrollMargins`).
+pub(crate) static SCROLL_MARGINS: LazyLock<Facet<ScrollMarginSource>> =
+    LazyLock::new(Facet::define);
+
+/// The margins from [`SCROLL_MARGINS`] (`getScrollMargins`): left, right,
+/// top and bottom.
+pub(crate) fn get_scroll_margins(view: &crate::EditorView) -> (f64, f64, f64, f64) {
+    let (mut left, mut right, mut top, mut bottom) = (0.0f64, 0.0f64, 0.0f64, 0.0f64);
+    for source in view.state().facet(&SCROLL_MARGINS).iter() {
+        if let Some(m) = source(view) {
+            if let Some(v) = m.left {
+                left = left.max(v);
+            }
+            if let Some(v) = m.right {
+                right = right.max(v);
+            }
+            if let Some(v) = m.top {
+                top = top.max(v);
+            }
+            if let Some(v) = m.bottom {
+                bottom = bottom.max(v);
+            }
+        }
+    }
+    (left, right, top, bottom)
 }

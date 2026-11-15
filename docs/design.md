@@ -55,10 +55,14 @@ The web platform features they depend on:
 | 23 | Attribute enumeration (`Element.attributes`, `getAttributeNames`) | ● | | ● | ● |
 | 24 | Node traversal and insertion over all node types (`childNodes`, `firstChild`/`nextSibling` including text, `insertBefore` with a text reference, node identity) | ● | ● | ● | ● |
 | 25 | `createElement` for any tag name, and `nodeName`/`tagName` | ● | ● | ● | ● |
+| 26 | `window.innerWidth`/`innerHeight` | ● | | | |
+| 27 | `offsetWidth`/`offsetHeight`/`offsetParent` | ● | | | |
+| 28 | Computed `overflow-x`/`overflow-y` as a pair (`getComputedStyle`) | ● | | | |
 | — | `white-space: pre`/`pre-wrap`, `tab-size`, font metrics, `scrollTop`, `scrollIntoView`, `getBoundingClientRect`, `focus()` | ● | ● | ● | ● |
 
 ● relies on it; ○ uses it in part. The columns come from these packages'
-documented architecture. Phase 2 step 1 pins exact versions and records each
+documented architecture; rows 26–28 come from the CM6 port, and the other
+columns are not yet checked for them. Phase 2 step 1 pins exact versions and records each
 API call from their published source, so the matrix becomes a checked list
 (section 8).
 
@@ -106,11 +110,14 @@ div-platform, div-macros, div-cli), **components** (div-components). Size:
 | 23 | Attribute enumeration | **Missing**: `get_attribute`/`set_attribute`/`remove_attribute` by name only (`divui/src/element.rs:598-677`). CM6's `setAttrs` removes the attributes not in the new set, `getAttrs` reads them for compositions, and the structural fidelity check serializes elements | framework | S | WPT `dom/nodes/attributes.html` |
 | 24 | Node traversal and insertion over all node types | **Partial**: `first_child`/`next_sibling` skip text nodes (`divui/src/element.rs:185-213`); `insert_before` takes an element reference, `insert_text_before` a text node before an element (`:150,252`); no `childNodes`, no node identity to key a map. The engine already has these for any node handle (`div-engine/src/lib.rs:981,1021`). CM6's tile sync walks and reorders a line's text and element children, and maps DOM positions back to tiles | framework | S | WPT `dom/nodes/Node-*` |
 | 25 | `createElement` for any tag, `nodeName` | **Partial**: `Element::create` knows a fixed tag list and fails on others (`divui/src/element.rs:1206-1251`), so mark decorations with `tagName` `b`, `code`, `var` or a custom element, and block wrappers like `navigation`, cannot be drawn; `kind()` reports a kind several tags share, so `em`, `strong` and `span` read alike | engine (DOM: unknown elements as `HTMLUnknownElement`), framework | S | WPT `dom/nodes/Document-createElement*` |
+| 26 | `window.innerWidth`/`innerHeight` | **Missing**: `Document::set_viewport` sets the viewport (`divui/src/document.rs:708`), with no getter. CM6 reads the window's size for the visible part of the editor and for `scrollIntoView`, and scrolls the window by `scrollBy` | framework | S | WPT `css/cssom-view/` |
+| 27 | `offsetWidth`/`offsetHeight`/`offsetParent` | **Missing**: `Element` has `client_*`, `scroll_*` and `bounding_rect`, no `offset_*`. CM6's `getScale` divides the bounding rectangle by `offsetWidth` to find a CSS transform's scale | framework | S | WPT `css/cssom-view/` |
+| 28 | Computed `overflow` pair | **Wrong value**: `Element::computed_style` reports `overflow-y: visible` beside `overflow-x: auto`, where CSS Overflow 3 (and Blink's `StyleAdjuster::AdjustOverflow`) computes `auto`. Div's layout applies the pair (`div-layout/src/scroll_area.rs:242`, `overflow_pair`), so the element scrolls, but CM6's `scrollRectIntoView` reads `overflowY` and passes over `.cm-scroller`, which sets only `overflow-x: auto` | engine (style: the computed value), framework (`computed_style`) | S | WPT `css/css-overflow/overflow-computed*`; the `scrolled` capture |
 
 Priority for the code editor, CM6 first: **16** (without it the DOM
 approach cannot be interactive), **2, 3, 4, 5, 6** (the editing host and
 selection geometry), **14** (CM6 is styled entirely by injected
-stylesheets) with **22**, **7, 8, 10, 11, 13**, then **15, 17**, **23–25**. Monaco additionally
+stylesheets) with **22**, **7, 8, 10, 11, 13**, then **15, 17**, **23–28**. Monaco additionally
 needs **21** (or **20**) and **18**. Rich text (ProseMirror, Lexical)
 needs the same plus **9** and `text/html` in **8**.
 
@@ -470,14 +477,17 @@ while Div implements the features. Each is labelled in code with
 | A visually hidden `<textarea>` receives text and IME in place of the `contenteditable` host | 2, 3, 7 | `contenteditable` with `beforeinput`/composition events |
 | Selection and caret drawn by the port's layers, with no native selection | 4 | Selection API and selection painting |
 | Caret and hit-test geometry from a measured monospace cell: x = column × cell. Wrong for wide characters, emoji, ligatures, proportional fonts and bidi | 5, 6 | `Range.getClientRects`, `caretPositionFromPoint` |
-| Inline styles generated from CM6's theme rules | 14 | 14a stylesheets with the ingestion mode, then 14b: style-mod's `<style>` text used as is |
+| Inline styles generated from CM6's theme rules: the port reads the rules style-mod renders, matches only selectors of class compounds and descendant combinators against the editor's own elements, and applies their declarations in mount order; it skips 15 of the 76 rules (pseudo-classes, attribute selectors, child combinators, at-rules) and 28 declarations Div's value parser rejects | 14 | 14a stylesheets with the ingestion mode, then 14b: style-mod's `<style>` text used as is |
 | Viewport recomputed from `scroll` events and timers | 11, 12, 13 | `ResizeObserver`, `IntersectionObserver`, `requestAnimationFrame` |
 | The editor kept in a block-only subtree; tokens of the same colour merged into one span | 16 | Fast DOM line rendering |
 | Double and triple click timed by the app | 15 | `MouseEvent.detail`, `dblclick` |
-| The `style` attribute written as a plain attribute | 22 | `style` applied as inline style |
+| The `style` attribute serialized by the port (`name: value;`, values as written) and its declarations applied as inline style with Div's value parser; `dom.style[name] = value` rewrites the attribute as the CSSOM does | 22 | `style` applied as inline style, `CSSStyleDeclaration` |
 | Stale attributes removed by name, from those the port wrote before; the structural check reads a fixed list of attribute names | 23 | Attribute enumeration |
 | A line whose children include text nodes is reordered by appending every child in order; dropped nodes are removed with their tiles; the structural check walks the tile tree instead of the DOM | 24 | Node traversal and `insertBefore` over all nodes |
 | Elements named by kind in the structural check and in `NullWidget.updateDOM` | 25 | `nodeName` |
+| The measure cycle runs synchronously when the view is built and after each update, not in an animation frame; the re-measure after `document.fonts.ready` is skipped | 13, 19 | `requestAnimationFrame`, `document.fonts` |
+| The window's size given in the view's configuration; `scrollBy` on the window does nothing | 26 | `innerWidth`/`innerHeight` |
+| The scale taken as 1 | 27 | `offsetWidth`/`offsetHeight` |
 
 ## 8. Phase 2 plan
 
@@ -605,6 +615,48 @@ Progress:
     editor's outer elements and the gap spacers come with the editor view
     and the viewport.
   - New Div gaps 22–25 (section 2), with labelled scaffolding (section 7).
+- M6, third part: the editor view on Div.
+  - `editorview.ts`: `EditorView` builds `.cm-editor`, `.cm-announced`,
+    `.cm-scroller` and `.cm-content`, updates from transactions,
+    dispatches, sets attributes from the facets, and runs the measure
+    cycle (scroll anchoring, scroll targets). Plugins, input and focus
+    handling, and coordinates beyond a monospace cell come with M7.
+  - `viewstate.ts`: the viewport around the visible part, the line gaps
+    for long lines, the scaler for documents beyond the browser's height
+    limit, and `measure`.
+  - The rest of `docview.ts`: `DocView` with the height lock, line height
+    and text size measurement, the gap spacers (`BlockGapWidget`) and the
+    decoration set the view draws.
+  - `theme.ts`, `extension.ts` (facets, `ViewUpdate`, `ScrollTarget`) and
+    `dom.ts`'s `scrollRectIntoView`, with the base theme as upstream
+    writes it.
+  - `style-mod` 4.1.4 (MIT): class names, rule rendering and the mount
+    order. Div has no `<style>` text (14b), so the rules are applied as
+    inline styles (section 7).
+  - Structural fidelity (section 5 step 3), measured against the
+    reference captures:
+    - `plain`: the editor's `outerHTML` equals Chromium's (2,491
+      characters), with `.cm-content`'s attributes compared as a set.
+      Chromium lists `style` between `contenteditable` and `class`;
+      without attribute enumeration (23) the order the port writes is
+      its serializer's, not one Div keeps.
+    - `.cm-content` equals Chromium's for `plain`, `gutter` and
+      `decorations`: lines 1–36 and the gap spacer below them,
+      `height: 4752px`.
+    - The 76 rules style-mod mounts have Chromium's selectors, in
+      Chromium's order (`document.styleSheets[0]`), with the theme class
+      `ͼ5`.
+    - `scrolled` does not match: new gap 28. The scroll target (line 150
+      at the top) gives Chromium's viewport, lines 122–211, but
+      `scrollRectIntoView` passes over `.cm-scroller` because Div reports
+      `overflow-y: visible`, so `scrollTop` stays 0 against Chromium's
+      2682 and the next measure moves the viewport back to the top. With
+      `overflow-y: auto` added to the case theme, an experiment not kept
+      in the tests, `scrollTop` is 2682 and `.cm-content` equals
+      Chromium's (lines 122–211, spacers of 2178 and 1602 pixels). The
+      two `scrolled` tests are ignored with the gap, and a test fails when
+      Div starts computing the pair.
+  - New Div gaps 26–28 (section 2), with labelled scaffolding (section 7).
 
 Every milestone after M5 runs the fidelity checks in section 5 and reports
 measured numbers. The highlighter (M8) follows CM6's design, a parse tree
