@@ -16,11 +16,16 @@
 //!   the viewport and size the gap spacers (`heightmap.ts`): [`BlockInfo`]
 //!   is public as upstream, and the map itself is in [`__test`], as
 //!   upstream exports it for its tests;
-//! - [`ChangedRange`] (`extension.ts`) and [`Direction`] (`bidi.ts`).
+//! - [`ChangedRange`] (`extension.ts`) and [`Direction`] (`bidi.ts`);
+//! - [`EditorView`] (`editorview.ts`): `.cm-editor`, `.cm-scroller` and
+//!   `.cm-content`, updated from transactions, with the attributes the
+//!   facets give and the measure cycle; [`Viewport`] and the view state
+//!   behind it (`viewstate.ts`), with gap spacers for what is not drawn;
+//! - themes (`theme.ts`) and [`StyleModule`], a port of `style-mod`, with
+//!   the facets, [`ViewUpdate`] and [`ScrollTarget`] of `extension.ts`.
 //!
-//! The `EditorView` itself (`.cm-editor`, `.cm-scroller`, `.cm-content`),
-//! the viewport, gutters and the theme come in the next parts of milestone
-//! M6, with the widget methods that need them (`ignoreEvent`, `coordsAt`).
+//! Gutters come in the last part of milestone M6; plugins, input and
+//! focus handling in M7.
 //!
 //! Div lacks some DOM features the content needs; the code that stands in
 //! for them is marked `div-gap` with the gap's number in the sample's
@@ -34,25 +39,36 @@ mod buildtile;
 mod decoration;
 mod docview;
 mod dom;
+mod editorview;
 mod extension;
 mod heightmap;
+mod style_mod;
+mod theme;
 mod tile;
+mod viewstate;
 
 pub use attributes::{attrs_eq, combine_attrs, Attrs};
 pub use bidi::Direction;
+pub use buildtile::BuildError;
 pub use decoration::{
     BlockType, BlockWrapper, BlockWrapperSpec, Decoration, DecorationKind, DecorationSet,
     DecorationSpec, LineSpec, MarkSpec, ReplaceSpec, SpecData, Widget, WidgetSpec, WidgetType,
 };
-pub use extension::ChangedRange;
+pub use dom::{Rect, WindowSize};
+pub use editorview::{EditorView, EditorViewConfig, UpdateListener};
+pub use extension::{
+    update_flag, ChangedRange, Margins, ScrollMarginSource, ScrollStrategy, ScrollTarget,
+    ViewUpdate,
+};
 pub use heightmap::{BlockInfo, BlockKind};
+pub use style_mod::{StyleModule, StyleSpec, StyleSpecValue};
+pub use viewstate::Viewport;
 
 /// The view's internals that upstream exports for its tests (`__test`):
 /// the height map and its oracle. Also the content drawing that the
 /// editor view will own.
 #[doc(hidden)]
 pub mod __test {
-    pub use crate::buildtile::BuildError;
     pub use crate::decoration::add_range;
     pub use crate::docview::ContentTiles;
     pub use crate::heightmap::{

@@ -345,6 +345,15 @@ impl<T> Clone for RangeSet<T> {
     }
 }
 
+/// Sets compare by identity, as JavaScript's `==` compares them, so that a
+/// facet holding sets sees a new set as a change. [`RangeSet::eq`]
+/// compares the ranges.
+impl<T> PartialEq for RangeSet<T> {
+    fn eq(&self, other: &RangeSet<T>) -> bool {
+        Arc::ptr_eq(&self.0, &other.0)
+    }
+}
+
 impl<T: RangeValue> fmt::Debug for RangeSet<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut list = f.debug_list();

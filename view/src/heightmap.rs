@@ -285,6 +285,21 @@ impl BlockInfo {
         }
     }
 
+    /// This block with its top and bottom, and those of the blocks in it,
+    /// mapped by `to_dom` (`scaleBlock`, for a non-identity scaler).
+    pub(crate) fn scaled(&self, to_dom: &dyn Fn(f64) -> f64) -> BlockInfo {
+        let top = to_dom(self.top);
+        let bottom = to_dom(self.bottom());
+        let content = match &self.content {
+            BlockContent::Blocks(blocks) => {
+                BlockContent::Blocks(blocks.iter().map(|b| b.scaled(to_dom)).collect())
+            }
+            BlockContent::Deco(deco) => BlockContent::Deco(deco.clone()),
+            BlockContent::Breaks(breaks) => BlockContent::Breaks(*breaks),
+        };
+        BlockInfo::new(self.from, self.length, top, bottom - top, content)
+    }
+
     /// This block followed by `other`, as one line (`join`).
     pub fn join(&self, other: &BlockInfo) -> BlockInfo {
         let mut content = match &self.content {
