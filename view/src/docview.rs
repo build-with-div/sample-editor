@@ -291,7 +291,7 @@ fn element_html(element: &Element, out: &mut String) -> Result<(), div::Error> {
 
 // Escape as the HTML serializer does: `&`, `<`, `>` and no-break spaces in
 // text; `&`, `"` and no-break spaces in attribute values.
-fn escape(text: &str, attribute: bool, out: &mut String) {
+pub(crate) fn escape(text: &str, attribute: bool, out: &mut String) {
     for ch in text.chars() {
         match ch {
             '&' => out.push_str("&amp;"),

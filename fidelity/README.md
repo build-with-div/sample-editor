@@ -83,8 +83,8 @@ cargo test -p editor-view --test fidelity
 
 The line tests draw the whole document with the part of `DocView` that draws, and compare the lines Chromium drew with the same lines of the port. Div's DOM cannot yet walk text nodes, list attributes or name tags (design section 2, gaps 23–25), so the port's lines are read in the tile tree's order, with the attributes CodeMirror writes read by name, and tags named by Div's element kind.
 
-The editor tests mount an `EditorView` as `pages/main.mjs` does: an 800x600 document, Geist Mono registered from `reference/pages/fonts`, the page's body styles, the case's theme and decorations, and the case's scroll target. They compare:
-- the editor's whole `outerHTML` for `plain`;
+The editor tests mount an `EditorView` as `pages/main.mjs` does: an 800x600 document, Geist Mono registered from `reference/pages/fonts`, the page's body styles, the case's theme, line numbers and decorations, and the case's scroll target. They compare:
+- the editor's whole `outerHTML`, gutters included, for `plain`, `gutter` and `decorations`;
 - `.cm-content`, with the viewport's lines and the gap spacers, for `plain`, `gutter` and `decorations`;
 - the selectors of the rules style-mod mounts against `styles.css`'s first stylesheet.
 
@@ -92,5 +92,5 @@ The attributes of `.cm-content` are compared as a set: Div cannot list attribute
 
 ## Still to come
 
-- The gutters and the pixel comparison (M6).
+- The pixel comparison (M6).
 - Behavioural fidelity (M7).

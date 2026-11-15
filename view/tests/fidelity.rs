@@ -19,8 +19,9 @@ use editor_state::{
 };
 use editor_view::__test::ContentTiles;
 use editor_view::{
-    Decoration, DecorationSet, EditorView, EditorViewConfig, LineSpec, MarkSpec, ReplaceSpec,
-    ScrollStrategy, StyleSpec, Viewport, Widget, WidgetSpec, WidgetType, WindowSize,
+    line_numbers, Decoration, DecorationSet, EditorView, EditorViewConfig, LineNumberConfig,
+    LineSpec, MarkSpec, ReplaceSpec, ScrollStrategy, StyleSpec, Viewport, Widget, WidgetSpec,
+    WidgetType, WindowSize,
 };
 
 const FIXTURES: &str = "../../fidelity/fixtures/reference-v1";
@@ -289,7 +290,11 @@ fn mount(case: &Case) -> (EditorView, Document) {
     page_style(&body, "width", "800px");
     page_style(&body, "overflow", "hidden");
 
+    // The case's extensions, in `main.mjs`'s order.
     let mut extensions = vec![case_theme()];
+    if case.name != "plain" {
+        extensions.push(line_numbers(LineNumberConfig::default()));
+    }
     if case.name == "decorations" {
         extensions.push(EditorView::decorations(reference_decorations(&doc)));
     }
@@ -374,6 +379,19 @@ fn plain_editor_matches_chromium() {
 }
 
 #[test]
+fn editors_with_gutters_match_chromium() {
+    for case in [case!("gutter"), case!("decorations")] {
+        let (view, _document) = mount(&case);
+        assert_eq!(
+            content_attributes_sorted(&view.outer_html().unwrap()),
+            content_attributes_sorted(case.html.trim_end()),
+            "{}: the editor differs from {FIXTURES}",
+            case.name
+        );
+    }
+}
+
+#[test]
 fn editor_content_matches_chromium() {
     for case in [case!("plain"), case!("gutter"), case!("decorations")] {
         let (view, _document) = mount(&case);
@@ -405,12 +423,12 @@ fn scroller_overflow_y_stays_visible_in_div() {
 
 #[test]
 #[ignore = "div-gap 28: overflow-y keeps `visible` beside overflow-x `auto`"]
-fn scrolled_editor_content_matches_chromium() {
+fn scrolled_editor_matches_chromium() {
     let case = case!("scrolled");
     let (view, _document) = mount(&case);
     assert_eq!(
-        content_attributes_sorted(&view.content_html().unwrap()),
-        content_attributes_sorted(captured_content(case.html)),
+        content_attributes_sorted(&view.outer_html().unwrap()),
+        content_attributes_sorted(case.html.trim_end()),
     );
 }
 

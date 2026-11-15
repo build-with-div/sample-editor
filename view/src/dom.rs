@@ -17,10 +17,13 @@ use crate::style_mod::parse_declaration;
 
 const STALE: div::Error = div::Error::InvalidArgument("the text node was removed");
 
-/// A DOM node a tile draws into: an element or a text node.
+/// A DOM node a tile or gutter marker draws into: an element or a text
+/// node (`Node`).
 #[derive(Clone)]
-pub(crate) enum DomNode {
+pub enum DomNode {
+    /// An element.
     Element(Element),
+    /// A text node, which the view removes when it no longer draws it.
     Text(WeakTextNode),
 }
 
@@ -150,6 +153,13 @@ fn apply_style_attribute(
     Ok(())
 }
 
+/// `dom.style.cssText += text`: append declarations to the `style`
+/// attribute, which is then read back as declarations (div-gap: 22).
+pub(crate) fn add_css_text(dom: &Element, text: &str) -> Result<(), div::Error> {
+    let old = dom.get_attribute("style")?.unwrap_or_default();
+    set_attribute(dom, "style", &format!("{old}{text}"))
+}
+
 /// Set one inline style property, `dom.style[name] = value`; an empty
 /// value removes it. As in a browser, the `style` attribute reflects the
 /// inline declarations: a new property is appended, a changed one keeps
@@ -157,8 +167,8 @@ fn apply_style_attribute(
 ///
 /// div-gap: 22 `CSSStyleDeclaration`. The value is parsed with Div's value
 /// parser; a value it cannot parse is ignored, as a browser ignores an
-/// invalid one. Values are serialized as written (see [`css_text`]).
-pub(crate) fn set_style(dom: &Element, name: &str, value: &str) -> Result<(), div::Error> {
+/// invalid one. Values are serialized as written, as `css_text` does.
+pub fn set_style(dom: &Element, name: &str, value: &str) -> Result<(), div::Error> {
     if StyleProperty::from_css_name(name).is_none() {
         return Ok(());
     }
