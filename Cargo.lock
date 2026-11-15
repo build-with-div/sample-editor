@@ -387,6 +387,7 @@ version = "0.0.0"
 dependencies = [
  "divui",
  "editor-state",
+ "png",
 ]
 
 [[package]]

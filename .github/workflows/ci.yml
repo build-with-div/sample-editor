@@ -98,3 +98,8 @@ jobs:
       # docs/design.md reports PROBE_SCALE=full runs on a named machine.
       - name: Test
         run: cargo test --locked -- --nocapture
+
+      # A measurement, not a gate (docs/design.md §8): how far each case's
+      # frame is from Chromium's capture, on this runner's glyph rasterizer.
+      - name: Measure pixels against Chromium
+        run: cargo test --locked -p editor-view --test fidelity pixels -- --ignored --nocapture

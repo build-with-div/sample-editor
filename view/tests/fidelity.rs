@@ -13,7 +13,10 @@
 use std::sync::OnceLock;
 
 use div::typed_style::{parse_literal, Overflow, StyleProperty};
-use div::{Document, Element, FontAxisRange, FontFaceDescriptor, FontStyleRange};
+use div::{
+    Document, Element, EngineOptions, FontAxisRange, FontFaceDescriptor, FontStyleRange,
+    RasterConfiguration, ViewportMetrics,
+};
 use editor_state::{
     EditorSelection, EditorState, EditorStateConfig, Extension, Insertion, RangeSetBuilder, Text,
 };
@@ -276,9 +279,13 @@ fn page_style(element: &Element, name: &str, value: &str) {
 }
 
 fn mount(case: &Case) -> (EditorView, Document) {
+    mount_in(case, Document::new(800, 600).unwrap())
+}
+
+// Mount the case in `document`, an 800x600 document.
+fn mount_in(case: &Case, document: Document) -> (EditorView, Document) {
     let source = case_doc(case.json);
     let doc = Text::of(&source.split('\n').collect::<Vec<_>>()).unwrap();
-    let document = Document::new(800, 600).unwrap();
     let mut descriptor = FontFaceDescriptor::new("Geist Mono");
     descriptor.style = FontStyleRange::Normal;
     descriptor.weight = FontAxisRange::new(100.0, 900.0);
@@ -404,6 +411,35 @@ fn editor_content_matches_chromium() {
     }
 }
 
+// The first element under `root`, in tree order, with `class`.
+fn first_with_class(root: &Element, class: &str) -> Option<Element> {
+    let mut child = root.first_child().unwrap();
+    while let Some(element) = child {
+        let classes = element.get_attribute("class").unwrap().unwrap_or_default();
+        if classes.split_whitespace().any(|c| c == class) {
+            return Some(element);
+        }
+        if let Some(found) = first_with_class(&element, class) {
+            return Some(found);
+        }
+        child = element.next_sibling().unwrap();
+    }
+    None
+}
+
+// The light theme gives `.cm-gutters` `border: 0px solid #ddd` and
+// `.cm-gutters.cm-gutters-before` `border-right-width: 1px`, in that order
+// of specificity but the other order in the sheet. The inline rules apply
+// them in sheet order (div-gap 14a), so the gutter has no right border and
+// the content starts 1px further left than in Chromium, which the pixel
+// comparison shows. When this fails, the rules cascade by specificity.
+#[test]
+fn gutter_right_border_stays_zero_in_div() {
+    let (view, _document) = mount(&case!("gutter"));
+    let gutters = first_with_class(view.dom(), "cm-gutters").expect("a .cm-gutters");
+    assert_eq!(*gutters.computed_style().unwrap().border_right_width(), 0);
+}
+
 // Upstream scrolls only an element whose computed `overflow-y` is `auto`
 // or `scroll`. The scroller sets `overflow-x: auto`, which per CSS
 // Overflow 3 makes its `visible` `overflow-y` compute to `auto`; Div keeps
@@ -493,4 +529,200 @@ fn mounted_rules_match_chromium() {
         .map(|rule| quote_attribute_values(rule[..rule.find(" {").unwrap()].trim_end()))
         .collect();
     assert_eq!(mounted, expected);
+}
+
+// The pixel comparison (design section 5): each case's frame on Div
+// against Chromium's screenshot.
+
+// The case's Chromium screenshot as RGB pixels.
+fn chromium_pixels(case: &str) -> (u32, u32, Vec<[u8; 3]>) {
+    let path = format!(
+        "{}/../fidelity/fixtures/reference-v1/{case}/chromium.png",
+        env!("CARGO_MANIFEST_DIR")
+    );
+    let mut decoder =
+        png::Decoder::new(std::io::BufReader::new(std::fs::File::open(&path).unwrap()));
+    decoder.set_transformations(png::Transformations::normalize_to_color8());
+    let mut reader = decoder.read_info().unwrap();
+    let mut buffer = vec![0; reader.output_buffer_size().unwrap()];
+    let info = reader.next_frame(&mut buffer).unwrap();
+    let channels = info.color_type.samples();
+    let pixels = buffer[..info.buffer_size()]
+        .chunks(channels)
+        .map(|p| [p[0], p[1], p[2]])
+        .collect();
+    (info.width, info.height, pixels)
+}
+
+// Div's frame as RGB pixels, composited over white as a page's canvas
+// is: Div's bitmap is premultiplied RGBA.
+fn div_pixels(document: &Document) -> (u32, u32, Vec<[u8; 3]>) {
+    let bitmap = document.render_to_bitmap().unwrap();
+    let (width, height) = (bitmap.width(), bitmap.height());
+    let mut pixels = Vec::with_capacity((width * height) as usize);
+    for y in 0..height as usize {
+        let row = &bitmap.pixels()[y * bitmap.stride()..];
+        for x in 0..width as usize {
+            let p = &row[x * 4..x * 4 + 4];
+            let over_white = |c: u8| (c as u16 + 255 - p[3] as u16).min(255) as u8;
+            pixels.push([over_white(p[0]), over_white(p[1]), over_white(p[2])]);
+        }
+    }
+    (width, height, pixels)
+}
+
+// How two frames differ.
+#[derive(Debug)]
+struct PixelDiff {
+    // Pixels whose colours are not identical.
+    differing: usize,
+    // Pixels with a channel more than 32 apart.
+    over_32: usize,
+    // The largest channel difference.
+    max: u8,
+    // The bounding box of the differing pixels: left, top, right, bottom.
+    bounds: Option<(u32, u32, u32, u32)>,
+}
+
+// How frame `b` differs from frame `a`, both `width` wide, in the columns
+// `columns` of `a`, comparing each pixel of `a` with the pixel `shift`
+// columns to its left in `b`.
+fn pixel_diff(
+    width: u32,
+    a: &[[u8; 3]],
+    b: &[[u8; 3]],
+    columns: std::ops::Range<u32>,
+    shift: u32,
+) -> PixelDiff {
+    let mut diff = PixelDiff {
+        differing: 0,
+        over_32: 0,
+        max: 0,
+        bounds: None,
+    };
+    let height = a.len() as u32 / width;
+    for y in 0..height {
+        for x in columns.clone() {
+            let a = a[(y * width + x) as usize];
+            let b = b[(y * width + x - shift) as usize];
+            let channel = (0..3).map(|c| a[c].abs_diff(b[c])).max().unwrap();
+            if channel == 0 {
+                continue;
+            }
+            diff.differing += 1;
+            if channel > 32 {
+                diff.over_32 += 1;
+            }
+            diff.max = diff.max.max(channel);
+            diff.bounds = Some(match diff.bounds {
+                None => (x, y, x + 1, y + 1),
+                Some((l, t, r, b)) => (l.min(x), t.min(y), r.max(x + 1), b.max(y + 1)),
+            });
+        }
+    }
+    diff
+}
+
+fn write_png(path: &std::path::Path, width: u32, height: u32, pixels: &[[u8; 3]]) {
+    let file = std::io::BufWriter::new(std::fs::File::create(path).unwrap());
+    let mut encoder = png::Encoder::new(file, width, height);
+    encoder.set_color(png::ColorType::Rgb);
+    encoder.set_depth(png::BitDepth::Eight);
+    let data: Vec<u8> = pixels.iter().flatten().copied().collect();
+    encoder
+        .write_header()
+        .unwrap()
+        .write_image_data(&data)
+        .unwrap();
+}
+
+// The case mounted under the capture's conditions (`fidelity/capture.py`).
+// Chromium ran on Linux with the real-font Fontconfig profile, whose text
+// Div replays with `RasterConfiguration::chromium_linux_lcd`, and with
+// `--hide-scrollbars`, which Div's own replay harness renders as
+// `scrollbar-width: none`; the scroller is the editor's only element with
+// scrollbars.
+fn mount_as_captured(case: &Case) -> (EditorView, Document) {
+    let document = Document::with_options(
+        ViewportMetrics::from_logical_size(800.0, 600.0, 1.0).unwrap(),
+        EngineOptions {
+            raster_configuration: RasterConfiguration::chromium_linux_lcd(),
+        },
+    )
+    .unwrap();
+    let (view, document) = mount_in(case, document);
+    page_style(view.scroll_dom(), "scrollbar-width", "none");
+    (view, document)
+}
+
+// A way of mounting a case.
+type Mount = fn(&Case) -> (EditorView, Document);
+
+// Chromium's gutter, its 1px right border included, spans columns 0..32 of
+// the cases with line numbers.
+const GUTTER: u32 = 32;
+
+// A measurement, not a gate: the frames differ while Div lacks the
+// features the editor needs (design section 2). Run with
+// `cargo test -p editor-view --test fidelity pixels -- --ignored --nocapture`.
+//
+// It measures each case twice: in a default document, as the other tests
+// mount it, and under the capture's conditions. Under the capture's
+// conditions it also splits the cases with line numbers into the gutter
+// and the content, and measures the content again with Div's frame moved
+// 1px right, the width of the gutter border the inline rules lose (see
+// `gutter_right_border_stays_zero_in_div`). With `PIXEL_OUT` set to a
+// directory, it also writes each frame and a difference image there.
+#[test]
+#[ignore = "a measurement: run with --ignored --nocapture"]
+fn pixels_against_chromium() {
+    let out = std::env::var_os("PIXEL_OUT").map(std::path::PathBuf::from);
+    let print = |label: &str, diff: &PixelDiff, total: u32| {
+        println!(
+            "{label}: {} of {total} pixels differ ({:.2}%), {} by more than 32, \
+             at most {}; within {:?}",
+            diff.differing,
+            diff.differing as f64 * 100.0 / total as f64,
+            diff.over_32,
+            diff.max,
+            diff.bounds
+        );
+    };
+    let conditions: [(&str, Mount); 2] = [("default", mount), ("as-captured", mount_as_captured)];
+    for (condition, mount) in conditions {
+        for case in [
+            case!("plain"),
+            case!("gutter"),
+            case!("decorations"),
+            case!("scrolled"),
+        ] {
+            let (_view, document) = mount(&case);
+            let (width, height, expected) = chromium_pixels(case.name);
+            let (div_width, div_height, actual) = div_pixels(&document);
+            assert_eq!((div_width, div_height), (width, height));
+            let label = format!("{condition} {}", case.name);
+            let diff = pixel_diff(width, &expected, &actual, 0..width, 0);
+            print(&label, &diff, width * height);
+            if condition == "as-captured" && case.name != "plain" {
+                let gutter = pixel_diff(width, &expected, &actual, 0..GUTTER, 0);
+                print(&format!("{label}, gutter"), &gutter, GUTTER * height);
+                let content = (width - GUTTER) * height;
+                let diff = pixel_diff(width, &expected, &actual, GUTTER..width, 0);
+                print(&format!("{label}, content"), &diff, content);
+                let diff = pixel_diff(width, &expected, &actual, GUTTER..width, 1);
+                print(&format!("{label}, content moved 1px"), &diff, content);
+            }
+            if let Some(out) = &out {
+                std::fs::create_dir_all(out).unwrap();
+                let name = |kind: &str| out.join(format!("{}.{condition}.{kind}.png", case.name));
+                write_png(&name("div"), width, height, &actual);
+                let marked: Vec<[u8; 3]> = expected
+                    .iter()
+                    .zip(&actual)
+                    .map(|(a, b)| if a == b { [255, 255, 255] } else { [255, 0, 0] })
+                    .collect();
+                write_png(&name("diff"), width, height, &marked);
+            }
+        }
+    }
 }
