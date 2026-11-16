@@ -5,16 +5,18 @@
 //! A plugin value lives in the view. Upstream hands it the view through
 //! `update.view`; here [`PluginValue::update`] receives the view next to
 //! the update, and [`EditorView::plugin`] borrows a value for reading.
-//! Event handlers and observers (`eventHandlers`, `eventObservers`), the
-//! `decorations` option and plugin arguments (`of`) come with input
-//! handling in milestone M7.
+//! A plugin's DOM event handlers and observers (`eventHandlers`,
+//! `eventObservers`) receive the view and the event; a handler reaches the
+//! plugin's own value, which upstream passes as `this`, through
+//! [`EditorView::plugin`]. The `decorations` option and plugin arguments
+//! (`of`) come later in milestone M7.
 
 use std::any::Any;
 use std::cell::{Ref, RefCell};
 use std::marker::PhantomData;
 use std::sync::{Arc, LazyLock, OnceLock};
 
-use editor_state::{Extension, Facet, FacetConfig};
+use editor_state::{Callback, Extension, Facet, FacetConfig};
 
 use crate::extension::ViewUpdate;
 use crate::EditorView;
@@ -46,9 +48,28 @@ pub trait PluginValue: Any {
 
 type Create = dyn Fn(&EditorView) -> Result<Box<dyn PluginValue>, div::Error> + Send + Sync;
 
+/// A DOM event handler or observer (`DOMEventHandlers`' functions): given
+/// the view and the event, a handler returns true when it handled the
+/// event, which then has its default prevented. An observer's result is
+/// ignored.
+pub type DomEventHandler = Callback<dyn Fn(&mut EditorView, &div::Event) -> bool + Send + Sync>;
+
+/// DOM event handlers by event type, in the order given
+/// (`DOMEventHandlers`).
+pub type DomEventHandlers = Vec<(String, DomEventHandler)>;
+
+/// Wrap `f` as a [`DomEventHandler`].
+pub fn dom_event_handler(
+    f: impl Fn(&mut EditorView, &div::Event) -> bool + Send + Sync + 'static,
+) -> DomEventHandler {
+    Callback(Arc::new(f))
+}
+
 struct PluginInner {
     create: Box<Create>,
     extension: OnceLock<Extension>,
+    event_handlers: DomEventHandlers,
+    event_observers: DomEventHandlers,
 }
 
 /// A view plugin's identity in the [`VIEW_PLUGIN`] facet
@@ -59,6 +80,16 @@ pub(crate) struct PluginSource(Arc<PluginInner>);
 impl PartialEq for PluginSource {
     fn eq(&self, other: &Self) -> bool {
         Arc::ptr_eq(&self.0, &other.0)
+    }
+}
+
+impl PluginSource {
+    pub(crate) fn event_handlers(&self) -> &DomEventHandlers {
+        &self.0.event_handlers
+    }
+
+    pub(crate) fn event_observers(&self) -> &DomEventHandlers {
+        &self.0.event_observers
     }
 }
 
@@ -84,11 +115,21 @@ pub struct PluginSpec<V: PluginValue> {
     /// Extensions the plugin adds to a configuration it is in
     /// (`provide`).
     pub provide: Option<Provide<V>>,
+    /// DOM event handlers for the plugin (`eventHandlers`), run as
+    /// [`EditorView::dom_event_handlers`] runs them.
+    pub event_handlers: DomEventHandlers,
+    /// DOM event observers for the plugin (`eventObservers`), run as
+    /// [`EditorView::dom_event_observers`] runs them.
+    pub event_observers: DomEventHandlers,
 }
 
 impl<V: PluginValue> Default for PluginSpec<V> {
     fn default() -> Self {
-        PluginSpec { provide: None }
+        PluginSpec {
+            provide: None,
+            event_handlers: Vec::new(),
+            event_observers: Vec::new(),
+        }
     }
 }
 
@@ -122,6 +163,8 @@ impl<V: PluginValue> ViewPlugin<V> {
                     create(view).map(|value| Box::new(value) as Box<dyn PluginValue>)
                 }),
                 extension: OnceLock::new(),
+                event_handlers: spec.event_handlers,
+                event_observers: spec.event_observers,
             }),
             value: PhantomData,
         };

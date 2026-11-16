@@ -29,9 +29,13 @@
 //!   `keymap.ts`), with the key names of a port of `w3c-keyname`
 //!   ([`keyname`]).
 //!
-//! The view's DOM event handling, which runs the key bindings for the
-//! content's `keydown` events, and focus handling come later in milestone
-//! M7.
+//! - DOM event handling (`input.ts`): the handlers and observers plugins
+//!   and [`EditorView::dom_event_handlers`] register run for the events on
+//!   the content of a view made with [`EditorView::new_shared`], the key
+//!   bindings among them.
+//!
+//! Focus, mouse selection, the clipboard, composition and the coordinate
+//! queries come later in milestone M7.
 //!
 //! Div lacks some DOM features the content needs; the code that stands in
 //! for them is marked `div-gap` with the gap's number in the sample's
@@ -49,6 +53,7 @@ mod editorview;
 mod extension;
 mod gutter;
 mod heightmap;
+mod input;
 mod keymap;
 pub mod keyname;
 mod plugin;
@@ -77,11 +82,15 @@ pub use gutter::{
     GUTTER_LINE_CLASS, GUTTER_WIDGET_CLASS, LINE_NUMBER_MARKERS, LINE_NUMBER_WIDGET_MARKER,
 };
 pub use heightmap::{BlockInfo, BlockKind};
+pub use input::TabFocusMode;
 pub use keymap::{
     command, run_scope_handlers, state_command, AnyKeyHandler, Command, KeyBinding, KeyBindings,
     Keymaps, KEYMAP,
 };
-pub use plugin::{PluginSpec, PluginValue, Provide, ViewPlugin};
+pub use plugin::{
+    dom_event_handler, DomEventHandler, DomEventHandlers, PluginSpec, PluginValue, Provide,
+    ViewPlugin,
+};
 pub use style_mod::{StyleModule, StyleSpec, StyleSpecValue};
 pub use viewstate::Viewport;
 

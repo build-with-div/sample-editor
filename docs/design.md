@@ -58,10 +58,11 @@ The web platform features they depend on:
 | 26 | `window.innerWidth`/`innerHeight` | ● | | | |
 | 27 | `offsetWidth`/`offsetHeight`/`offsetParent` | ● | | | |
 | 28 | Computed `overflow-x`/`overflow-y` as a pair (`getComputedStyle`) | ● | | | |
+| 29 | `removeEventListener` for one listener, and listener options (`passive`) | ● | | | |
 | — | `white-space: pre`/`pre-wrap`, `tab-size`, font metrics, `scrollTop`, `scrollIntoView`, `getBoundingClientRect`, `focus()` | ● | ● | ● | ● |
 
 ● relies on it; ○ uses it in part. The columns come from these packages'
-documented architecture; rows 26–28 come from the CM6 port, and the other
+documented architecture; rows 26–29 come from the CM6 port, and the other
 columns are not yet checked for them. Phase 2 step 1 pins exact versions and records each
 API call from their published source, so the matrix becomes a checked list
 (section 8).
@@ -113,11 +114,12 @@ div-platform, div-macros, div-cli), **components** (div-components). Size:
 | 26 | `window.innerWidth`/`innerHeight` | **Missing**: `Document::set_viewport` sets the viewport (`divui/src/document.rs:708`), with no getter. CM6 reads the window's size for the visible part of the editor and for `scrollIntoView`, and scrolls the window by `scrollBy` | framework | S | WPT `css/cssom-view/` |
 | 27 | `offsetWidth`/`offsetHeight`/`offsetParent` | **Missing**: `Element` has `client_*`, `scroll_*` and `bounding_rect`, no `offset_*`. CM6's `getScale` divides the bounding rectangle by `offsetWidth` to find a CSS transform's scale | framework | S | WPT `css/cssom-view/` |
 | 28 | Computed `overflow` pair | **Wrong value**: `Element::computed_style` reports `overflow-y: visible` beside `overflow-x: auto`, where CSS Overflow 3 (and Blink's `StyleAdjuster::AdjustOverflow`) computes `auto`. Div's layout applies the pair (`div-layout/src/scroll_area.rs:242`, `overflow_pair`), so the element scrolls, but CM6's `scrollRectIntoView` reads `overflowY` and passes over `.cm-scroller`, which sets only `overflow-x: auto` | engine (style: the computed value), framework (`computed_style`) | S | WPT `css/css-overflow/overflow-computed*`; the `scrolled` capture |
+| 29 | `removeEventListener` for one listener, listener options | **Missing**: `Element::on(type, callback)` returns no handle to remove the listener by, and `remove_event(type)` removes every listener of the type on the element, the host's among them (`divui/src/element.rs:1132,1146`); `on` takes no options. CM6 listens on the content for each event type its handlers name, removes the listeners of types no longer handled when the view is reconfigured, and adds observer-only types as `passive` | framework (events) | S | WPT `dom/events/EventTarget-removeEventListener*`, `dom/events/AddEventListenerOptions-passive*` |
 
 Priority for the code editor, CM6 first: **16** (without it the DOM
 approach cannot be interactive), **2, 3, 4, 5, 6** (the editing host and
 selection geometry), **14** (CM6 is styled entirely by injected
-stylesheets) with **22**, **7, 8, 10, 11, 13**, then **15, 17**, **23–28**. Monaco additionally
+stylesheets) with **22**, **7, 8, 10, 11, 13**, then **15, 17**, **23–29**. Monaco additionally
 needs **21** (or **20**) and **18**. Rich text (ProseMirror, Lexical)
 needs the same plus **9** and `text/html` in **8**.
 
@@ -489,6 +491,9 @@ while Div implements the features. Each is labelled in code with
 | The measure cycle runs synchronously when the view is built and after each update, not in an animation frame; the re-measure after `document.fonts.ready` is skipped | 13, 19 | `requestAnimationFrame`, `document.fonts` |
 | The window's size given in the view's configuration; `scrollBy` on the window does nothing | 26 | `innerWidth`/`innerHeight` |
 | The scale taken as 1; the gutters' scroll margins use the bounding rectangle's width for `offsetWidth` | 27 | `offsetWidth`/`offsetHeight` |
+| The content's listener for an event type stays once added, finding no handlers after a reconfiguration drops them; no listener is passive | 29 | `removeEventListener` for one listener, listener options |
+| The tile an event's target belongs to (`Tile.get`) found by a linear search over the tiles with `is_same_node`, where upstream reads a property on the DOM node | 24 | Node identity to key a map |
+| The DOM observer's pending changes are not flushed before the key handlers run | 10 | `MutationObserver` |
 
 ## 8. Phase 2 plan
 
@@ -770,6 +775,33 @@ Progress:
     Div's public API does not offer at the pinned commit. Upstream's
     `webtest-coords.ts` exercises exactly those.
   - No new Div gaps.
+- M7, second part: DOM event handling.
+  - The core of `input.ts`: `InputState` with its handler registry
+    (`ensureHandlers`, `computeHandlers`), `handleEvent`, `runHandlers`
+    (observers first, then handlers until one handles the event, whose
+    default is then prevented), `eventBelongsToEditor` with widgets'
+    `ignoreEvent`, the work done on every `keydown` (the last key and
+    tab-focus mode, `setTabFocusMode`) and the view's own `keydown`,
+    `scroll` and `wheel` handlers.
+  - `domEventHandlers` and `domEventObservers`, as plugin options and as
+    view extensions. A handler receives the view and the event; a
+    plugin reaches its own value through `view.plugin`, where upstream
+    binds `this`.
+  - The `keymap` facet now enables its `keydown` handler, so key bindings
+    run for the content's key events.
+  - Div's listeners are `'static` closures, so a listener reaches the
+    view through a weak reference: only a view made with
+    `EditorView::new_shared` listens. An event that arrives while the
+    view is borrowed (during an update, or held by its host) waits and
+    runs at the end of the update, as upstream defers events during
+    updates.
+  - Tests: 14 of the port's own, dispatching Div events at the content
+    through the host's listener route: key bindings, handler order,
+    plugin handlers, tab-focus mode, widgets' events, deferred events,
+    reconfiguration and a dropped view. Upstream's `webtest-domevents.ts`
+    drives these through focus, mouse selection and the clipboard, which
+    come in later parts.
+  - New Div gap 29 (section 2), with labelled scaffolding (section 7).
 
 Every milestone after M5 runs the fidelity checks in section 5 and reports
 measured numbers. The highlighter (M8) follows CM6's design, a parse tree

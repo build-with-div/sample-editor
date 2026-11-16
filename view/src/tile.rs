@@ -120,6 +120,20 @@ fn element_of(dom: Option<Adopted>) -> (Option<Element>, Attrs) {
 }
 
 impl Tiles {
+    /// The tile drawn into `element` (`Tile.get`), if any.
+    ///
+    /// div-gap: 24 node identity. Upstream stores the tile on its DOM
+    /// node; Div's nodes have no identity to key a map with, so this
+    /// compares `element` with each tile's element.
+    pub(crate) fn get(&self, element: &Element) -> Option<TileId> {
+        self.slots.iter().enumerate().find_map(|(i, slot)| {
+            let dom = slot.as_ref()?.dom.element()?;
+            dom.is_same_node(element)
+                .unwrap_or(false)
+                .then_some(TileId(i))
+        })
+    }
+
     fn alloc(&mut self, kind: TileKind, dom: DomNode, length: usize, flags: u32) -> TileId {
         self.alloc_with(kind, dom, length, flags, Attrs::new())
     }

@@ -314,6 +314,7 @@ static GUTTER_VIEW: LazyLock<ViewPlugin<GutterView>> = LazyLock::new(|| {
                     })
                 })))
             })),
+            ..PluginSpec::default()
         },
     )
 });

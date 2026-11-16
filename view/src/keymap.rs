@@ -2,10 +2,8 @@
 //! registers them, and [`run_scope_handlers`], which runs them for a
 //! keyboard event.
 //!
-//! Upstream's facet also enables a `keydown` handler that runs the
-//! `"editor"` scope for the content's key events. DOM event handlers come
-//! with the view's input handling, the next part of milestone M7, so for
-//! now bindings run only through [`run_scope_handlers`].
+//! The facet enables a `keydown` handler, with default precedence, that
+//! runs the `"editor"` scope's bindings for the content's key events.
 
 use std::cell::RefCell;
 use std::collections::HashMap;
@@ -13,9 +11,10 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, LazyLock, OnceLock};
 use std::time::{Duration, Instant};
 
-use editor_state::{Callback, Facet, FacetConfig, StateCommand};
+use editor_state::{Callback, Extension, Facet, FacetConfig, Prec, StateCommand};
 
 use crate::keyname::{alt_key, base, ctrl_key, key_name, meta_key, shift, shift_key};
+use crate::plugin::dom_event_handler;
 use crate::EditorView;
 
 /// A command (`Command`): a function that acts on a view and returns
@@ -126,11 +125,25 @@ impl PartialEq for Keymaps {
 /// with higher precedence, are tried first; once a command returns true,
 /// no further handler runs.
 pub static KEYMAP: LazyLock<Facet<KeyBindings, Keymaps>> = LazyLock::new(|| {
-    Facet::define_with(FacetConfig::new(|bindings: &[KeyBindings]| Keymaps {
-        bindings: bindings.to_vec(),
-        built: OnceLock::new(),
-    }))
+    Facet::define_with(
+        FacetConfig::new(|bindings: &[KeyBindings]| Keymaps {
+            bindings: bindings.to_vec(),
+            built: OnceLock::new(),
+        })
+        .enables_with(|_| handle_key_events()),
+    )
 });
+
+// `handleKeyEvents`.
+fn handle_key_events() -> Extension {
+    Prec::default(EditorView::dom_event_handlers(vec![(
+        "keydown".to_string(),
+        dom_event_handler(|view, event| {
+            let map = get_keymap(view);
+            run_handlers(&map, event, view, "editor")
+        }),
+    )]))
+}
 
 // A function a binding runs. Commands are compared by identity, as
 // upstream's `Set` of the functions it ran does.
@@ -427,8 +440,7 @@ fn build_keymap(bindings: &[KeyBinding], platform: Platform) -> Keymap {
     Keymap(bound)
 }
 
-/// The key codes of modifier keys (`modifierCodes`, from `input.ts`).
-const MODIFIER_CODES: [i32; 8] = [16, 17, 18, 20, 91, 92, 224, 225];
+use crate::input::MODIFIER_CODES;
 
 fn run_handlers(map: &Keymap, event: &div::Event, view: &mut EditorView, scope: &str) -> bool {
     let name = key_name(event);
