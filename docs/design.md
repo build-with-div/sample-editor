@@ -802,6 +802,33 @@ Progress:
     drives these through focus, mouse selection and the clipboard, which
     come in later parts.
   - New Div gap 29 (section 2), with labelled scaffolding (section 7).
+- M7, third part: bidirectional text.
+  - `bidi.ts`: CM6's bidi algorithm (`computeOrder`, with its character
+    type tables, the W, N0 and N1/N2 rules and isolates), `BidiSpan`,
+    `moveVisually` and `autoDirection`. Positions are UTF-8 bytes
+    outside, and the algorithm runs over the line's characters, so its
+    index arithmetic stays upstream's. Upstream limits the bracket
+    stack by the length of a stack shared between calls, which keeps
+    its largest size; the port limits each call's depth.
+  - The view's `bidiSpans`, with upstream's cache of line orders mapped
+    through changes, `textDirectionAt` with `perLineTextDirection`
+    (read from the block's computed `direction`), and
+    `bidiIsolatedRanges` with `getIsolatedRanges`, `dir=auto` resolved
+    from the first strong character. Upstream's `textDirectionAt` first
+    runs a pending measure; the port measures right after each update
+    (section 7), so only an explicitly requested measure can wait.
+  - Tests: upstream's `webtest-bidi.ts` in full, 20 tests. Its order
+    tests compare with the browser they run in; here
+    `fidelity/bidi_order.py` records pinned Chromium's order with
+    upstream's query, and the port matches it for all 20 lines in both
+    directions (40 orders). The 12 isolate tests pass with upstream's
+    expected spans. Upstream's non-joiner test never runs its loop (its
+    condition, `count++`, is 0 when first checked); the port runs it.
+    Two port-specific tests cover `textDirectionAt` and the cache.
+  - Cursor motion over these orders (`moveByChar`, `moveByGroup`,
+    `moveToLineBoundary`, atomic ranges) comes in the next part; the
+    vertical and wrapped-line motion needs gaps 5 and 6.
+  - No new Div gaps.
 
 Every milestone after M5 runs the fidelity checks in section 5 and reports
 measured numbers. The highlighter (M8) follows CM6's design, a parse tree
