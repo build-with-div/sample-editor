@@ -856,6 +856,38 @@ Progress:
     Windows-style group and line-boundary motion, indentation, line
     selection and atomic ranges.
   - New Div gap 30 (section 2), with labelled scaffolding (section 7).
+- M7, fifth part: editing commands.
+  - `commands.ts`: `deleteBy` with its atomic-range skipping and the
+    announcement of a deleted selection, and the 10 deletion commands
+    built on it (`deleteCharBackward` to `deleteLineBoundaryForward`),
+    `indentMore`, `indentLess`, `insertTab`, `toggleTabFocusMode` and
+    `temporarilySetTabFocusMode`. `deleteGroupBackward` and
+    `deleteGroupForward` are state commands that skip atomic ranges only
+    when run on a view; the port adds a view form of each for that.
+  - `comment.ts` in full: line and block comments from the
+    `"commentTokens"` language data. Its search margin and the lines'
+    indentation are measured in UTF-16 units, as upstream measures them.
+  - A new `editor-language` crate, the start of `@codemirror/language`
+    6.13.1 (the version the M5 reference page pins): the indentation
+    unit of `indent.ts` (`indentUnit`, `getIndentUnit`, `indentString`).
+    `editor-commands` depends on it.
+  - `deleteLine` moves the cursor vertically, so it waits for gaps 5
+    and 6; `indentSelection`, `insertNewlineAndIndent`, `insertBlankLine`
+    and the syntax and bracket commands wait for `@codemirror/language`'s
+    syntax tree (M8); the keymaps bind all of them and come after.
+  - Tests: from upstream's `test-commands.ts`, the 26 `indentMore`,
+    `indentLess`, `deleteGroupForward` and `deleteGroupBackward` cases
+    pass; its `indentSelection` and `insertNewlineAndIndent` cases indent
+    from `@codemirror/lang-javascript`'s tree and wait for M8. From
+    `test-comment.ts`, all 34 cases pass for both line tokens and both
+    block token pairs; its multi-language case reads JavaScript's tokens
+    from `@codemirror/lang-html`'s nested tree and waits for M8. Upstream
+    has no tests for the view's deletion commands; 12 port-specific tests
+    cover them (indentation units, clusters and variation selectors,
+    atomic ranges, the announcement, read-only states, `insertTab` and
+    the tab-focus commands through a Tab key event), and 7 cover the
+    indentation unit.
+  - No new Div gaps.
 
 Every milestone after M5 runs the fidelity checks in section 5 and reports
 measured numbers. The highlighter (M8) follows CM6's design, a parse tree

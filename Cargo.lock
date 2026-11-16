@@ -366,8 +366,16 @@ name = "editor-commands"
 version = "0.0.0"
 dependencies = [
  "divui",
+ "editor-language",
  "editor-state",
  "editor-view",
+]
+
+[[package]]
+name = "editor-language"
+version = "0.0.0"
+dependencies = [
+ "editor-state",
 ]
 
 [[package]]

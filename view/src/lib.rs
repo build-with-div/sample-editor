@@ -82,7 +82,7 @@ pub use dom::{DomNode, Rect, WindowSize};
 pub use editorview::{EditorView, EditorViewConfig, UpdateListener};
 pub use extension::{
     update_flag, AtomicRanges, ChangedRange, Margins, ScrollMarginSource, ScrollStrategy,
-    ScrollTarget, ViewUpdate,
+    ScrollTarget, ViewUpdate, ATOMIC_RANGES,
 };
 pub use gutter::{
     gutter, gutters, highlight_active_line_gutter, line_numbers, FormatNumber, GutterConfig,

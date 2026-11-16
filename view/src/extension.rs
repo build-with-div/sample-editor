@@ -328,8 +328,10 @@ pub(crate) static OUTER_DECORATIONS: LazyLock<Facet<DecorationSet>> = LazyLock::
 /// motions skip them.
 pub type AtomicRanges = Callback<dyn Fn(&EditorView) -> DecorationSet + Send + Sync>;
 
-/// The view's atomic ranges (`atomicRanges`).
-pub(crate) static ATOMIC_RANGES: LazyLock<Facet<AtomicRanges>> = LazyLock::new(Facet::define);
+/// The view's atomic ranges (`atomicRanges`), which
+/// [`EditorView::atomic_ranges`] provides. Commands read it to keep their
+/// edits out of the ranges.
+pub static ATOMIC_RANGES: LazyLock<Facet<AtomicRanges>> = LazyLock::new(Facet::define);
 
 /// Whether the text direction is read per line (`perLineTextDirection`).
 pub(crate) static PER_LINE_TEXT_DIRECTION: LazyLock<Facet<bool, bool>> = LazyLock::new(|| {

@@ -1,10 +1,15 @@
 //! Port of the state-only cases of `@codemirror/commands` 6.11.1
 //! `test/test-commands.ts`, with its `test/state.ts` helpers, followed by
 //! port-specific cases for state-only commands upstream does not test.
+//!
+//! Upstream's `indentSelection` and `insertNewlineAndIndent` cases indent
+//! from `@codemirror/lang-javascript`'s syntax tree; they come with
+//! `@codemirror/language`'s tree (M8).
 
 use editor_commands::{
     copy_line_down, copy_line_up, cursor_char_backward_logical, cursor_char_forward_logical,
-    cursor_doc_end, cursor_doc_start, delete_trailing_whitespace, insert_newline,
+    cursor_doc_end, cursor_doc_start, delete_group_backward, delete_group_forward,
+    delete_trailing_whitespace, indent_less, indent_more, insert_newline,
     insert_newline_keep_indent, move_line_down, move_line_up, select_all,
     select_char_forward_logical, select_doc_end, select_doc_start, select_line, simplify_selection,
     split_line, transpose_chars,
@@ -64,6 +69,63 @@ fn test(command: StateCommand, from: &str, to: &str) {
     assert_eq!(state_str(&cmd(&mk_state(from), command)), to);
 }
 
+// indentMore
+
+#[test]
+fn indent_more_adds_indentation() {
+    test(indent_more, "one\ntwo|\nthree", "one\n  two|\nthree");
+}
+
+#[test]
+fn indent_more_indents_all_lines_in_a_range() {
+    test(indent_more, "one\n<two\nthree>", "one\n  <two\n  three>");
+}
+
+#[test]
+fn indent_more_does_not_double_indent_a_given_line() {
+    test(
+        indent_more,
+        "on|e|\n<two\nth><ree\nfour>",
+        "  on|e|\n  <two\n  th><ree\n  four>",
+    );
+}
+
+#[test]
+fn indent_more_ignores_lines_a_range_ends_at_the_start_of() {
+    test(indent_more, "on<e\ntwo\n>three", "  on<e\n  two\n>three");
+}
+
+// indentLess
+
+#[test]
+fn indent_less_removes_indentation() {
+    test(indent_less, "one\n  two|\nthree", "one\ntwo|\nthree");
+}
+
+#[test]
+fn indent_less_removes_one_unit_of_indentation() {
+    test(
+        indent_less,
+        "one\n    two|\n     three|",
+        "one\n  two|\n   three|",
+    );
+}
+
+#[test]
+fn indent_less_dedents_all_lines_in_a_range() {
+    test(indent_less, "one\n  <two\n  three>", "one\n<two\nthree>");
+}
+
+#[test]
+fn indent_less_takes_tabs_into_account() {
+    test(indent_less, "   \tone|\n  \ttwo|", "  one|\n  two|");
+}
+
+#[test]
+fn indent_less_can_split_tabs() {
+    test(indent_less, "\tone|", "  one|");
+}
+
 // insertNewlineKeepIndent
 
 #[test]
@@ -109,6 +171,95 @@ fn delete_trailing_whitespace_checks_multiple_lines() {
 #[test]
 fn delete_trailing_whitespace_can_handle_empty_lines() {
     test_whitespace("one  \n\ntwo ", "one\n\ntwo");
+}
+
+// deleteGroupForward
+
+#[test]
+fn delete_group_forward_deletes_a_word() {
+    test(delete_group_forward, "one |two three", "one | three");
+}
+
+#[test]
+fn delete_group_forward_deletes_a_word_with_leading_space() {
+    test(delete_group_forward, "one| two three", "one| three");
+}
+
+#[test]
+fn delete_group_forward_deletes_a_group_of_punctuation() {
+    test(delete_group_forward, "one|...two", "one|two");
+}
+
+#[test]
+fn delete_group_forward_deletes_a_group_of_space() {
+    test(delete_group_forward, "one|  \ttwo", "one|two");
+}
+
+#[test]
+fn delete_group_forward_deletes_a_newline() {
+    test(delete_group_forward, "one|\ntwo", "one|two");
+}
+
+#[test]
+fn delete_group_forward_stops_deleting_at_a_newline() {
+    test(delete_group_forward, "one| \n two", "one|\n two");
+}
+
+#[test]
+fn delete_group_forward_stops_deleting_after_a_newline() {
+    test(delete_group_forward, "one|\n two", "one| two");
+}
+
+#[test]
+fn delete_group_forward_deletes_up_to_the_end_of_the_doc() {
+    test(delete_group_forward, "one|two", "one|");
+}
+
+#[test]
+fn delete_group_forward_does_nothing_at_the_end_of_the_doc() {
+    test(delete_group_forward, "one|", "one|");
+}
+
+// deleteGroupBackward
+
+#[test]
+fn delete_group_backward_deletes_a_word() {
+    test(delete_group_backward, "one two| three", "one | three");
+}
+
+#[test]
+fn delete_group_backward_deletes_a_word_with_trailing_space() {
+    test(delete_group_backward, "one two |three", "one |three");
+}
+
+#[test]
+fn delete_group_backward_deletes_a_group_of_punctuation() {
+    test(delete_group_backward, "one...|two", "one|two");
+}
+
+#[test]
+fn delete_group_backward_deletes_a_group_of_space() {
+    test(delete_group_backward, "one \t |two", "one|two");
+}
+
+#[test]
+fn delete_group_backward_deletes_a_newline() {
+    test(delete_group_backward, "one\n|two", "one|two");
+}
+
+#[test]
+fn delete_group_backward_stops_deleting_at_a_newline() {
+    test(delete_group_backward, "one \n |two", "one \n|two");
+}
+
+#[test]
+fn delete_group_backward_stops_deleting_after_a_newline() {
+    test(delete_group_backward, "one \n|two", "one |two");
+}
+
+#[test]
+fn delete_group_backward_deletes_up_to_the_start_of_the_doc() {
+    test(delete_group_backward, "one|two", "|two");
 }
 
 // moveLineUp

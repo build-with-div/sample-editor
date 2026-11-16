@@ -17,16 +17,30 @@
 //!   group and subword in visual order and to line boundaries
 //!   ([`cursor_char_left`], [`cursor_group_forward`],
 //!   [`cursor_subword_forward`], [`cursor_line_boundary_backward`],
-//!   [`select_char_right`] and the like), which take the view as
-//!   upstream's `Command`s do; the others have the [`StateCommand`] shape.
+//!   [`select_char_right`] and the like);
+//! - deletion by character, group and line boundary
+//!   ([`delete_char_backward`], [`delete_group_forward`],
+//!   [`delete_to_line_end`], [`delete_line_boundary_backward`] and the
+//!   like), skipping the view's atomic ranges and announcing a deleted
+//!   selection to screen readers;
+//! - indentation by unit ([`indent_more`], [`indent_less`],
+//!   [`insert_tab`]) with `@codemirror/language`'s indentation unit, and
+//!   the tab-focus commands ([`toggle_tab_focus_mode`]);
+//! - `comment.ts`: line and block comments from the `"commentTokens"`
+//!   language data ([`toggle_comment`], [`toggle_line_comment`],
+//!   [`toggle_block_comment`], [`CommentTokens`] and the like).
+//!
+//! Upstream's `Command`s take the view here too; the others have the
+//! [`StateCommand`] shape. `deleteGroupBackward` and `deleteGroupForward`
+//! are state commands that skip the view's atomic ranges when run on a
+//! view, so they also come in a view form ([`delete_group_backward_view`]).
 //!
 //! Not yet ported:
-//! - the other commands of `commands.ts` and `comment.ts`, and the
-//!   keymaps: they need the view's coordinates (motion by visual line or
-//!   page, Div gaps 5 and 6), the deletion commands with their
-//!   screen-reader announcements, or
-//!   `@codemirror/language` (indentation, the syntax tree, bracket
-//!   matching, comment tokens);
+//! - the commands that need the view's coordinates (motion by visual
+//!   line or page, `addCursorAbove`, `deleteLine`; Div gaps 5 and 6) or
+//!   `@codemirror/language`'s syntax tree (syntax motion, bracket
+//!   matching, `indentSelection`, `insertNewlineAndIndent`,
+//!   `insertBlankLine`), and the keymaps, which bind them;
 //! - `historyKeymap` and the handler for the `historyUndo` and
 //!   `historyRedo` input events, which belong to the view;
 //! - the history field's JSON serialization, like `EditorState`'s.
@@ -34,6 +48,8 @@
 //! [`StateCommand`]: editor_state::StateCommand
 
 mod commands;
+mod comment;
+mod editing;
 mod history;
 mod motion;
 
@@ -55,6 +71,19 @@ pub use motion::{
     select_group_forward_win, select_group_left, select_group_right, select_line_boundary_backward,
     select_line_boundary_forward, select_line_boundary_left, select_line_boundary_right,
     select_line_end, select_line_start, select_subword_backward, select_subword_forward,
+};
+
+pub use comment::{
+    block_comment, block_uncomment, line_comment, line_uncomment, toggle_block_comment,
+    toggle_block_comment_by_line, toggle_comment, toggle_line_comment, BlockTokens, CommentTokens,
+};
+
+pub use editing::{
+    delete_char_backward, delete_char_backward_strict, delete_char_forward, delete_group_backward,
+    delete_group_backward_view, delete_group_forward, delete_group_forward_view,
+    delete_group_forward_win, delete_line_boundary_backward, delete_line_boundary_forward,
+    delete_to_line_end, delete_to_line_start, indent_less, indent_more, insert_tab,
+    temporarily_set_tab_focus_mode, toggle_tab_focus_mode,
 };
 
 pub use history::{
