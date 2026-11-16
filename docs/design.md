@@ -751,6 +751,25 @@ Progress:
     colour, the `[w]` widget and the `…` replacement sit where
     Chromium's do.
   - No new Div gaps.
+- M7, first part: key bindings.
+  - `keymap.ts`: `KeyBinding`, the `keymap` facet (`KEYMAP`, with the
+    built bindings kept per facet value, as upstream's `WeakMap` keeps
+    them), `runScopeHandlers`, multi-stroke prefixes, `any` handlers,
+    scopes and platform key names. The prefix is ignored after 4 s,
+    where upstream clears it with a timeout.
+  - `w3c-keyname` 2.2.8 (MIT) as `keyname`. Div's `Event` carries what
+    it reads: `key_text` (`key`), `key_code` (`keyCode`) and the modifier
+    flags.
+  - The facet's `keydown` handler comes with DOM event handling (the
+    next part), so bindings run through `run_scope_handlers` for now.
+  - Tests: upstream has none for these files; 23 of the port's own, from
+    the sources.
+  - The coordinate queries (`coordsAtPos`, `coordsForChar`,
+    `posAtCoords`, `posAndSideAtCoords`) and the cursor motion built on
+    them need Range geometry (5) and `caretPositionFromPoint` (6), which
+    Div's public API does not offer at the pinned commit. Upstream's
+    `webtest-coords.ts` exercises exactly those.
+  - No new Div gaps.
 
 Every milestone after M5 runs the fidelity checks in section 5 and reports
 measured numbers. The highlighter (M8) follows CM6's design, a parse tree

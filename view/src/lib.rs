@@ -24,9 +24,14 @@
 //! - themes (`theme.ts`) and [`StyleModule`], a port of `style-mod`, with
 //!   the facets, [`ViewUpdate`] and [`ScrollTarget`] of `extension.ts`;
 //! - view plugins ([`ViewPlugin`], `extension.ts`) and gutters
-//!   ([`gutter`], [`line_numbers`], `gutter.ts`).
+//!   ([`gutter`], [`line_numbers`], `gutter.ts`);
+//! - key bindings ([`KeyBinding`], [`KEYMAP`], [`run_scope_handlers`],
+//!   `keymap.ts`), with the key names of a port of `w3c-keyname`
+//!   ([`keyname`]).
 //!
-//! Input and focus handling come in milestone M7.
+//! The view's DOM event handling, which runs the key bindings for the
+//! content's `keydown` events, and focus handling come later in milestone
+//! M7.
 //!
 //! Div lacks some DOM features the content needs; the code that stands in
 //! for them is marked `div-gap` with the gap's number in the sample's
@@ -44,6 +49,8 @@ mod editorview;
 mod extension;
 mod gutter;
 mod heightmap;
+mod keymap;
+pub mod keyname;
 mod plugin;
 mod style_mod;
 mod theme;
@@ -70,6 +77,10 @@ pub use gutter::{
     GUTTER_LINE_CLASS, GUTTER_WIDGET_CLASS, LINE_NUMBER_MARKERS, LINE_NUMBER_WIDGET_MARKER,
 };
 pub use heightmap::{BlockInfo, BlockKind};
+pub use keymap::{
+    command, run_scope_handlers, state_command, AnyKeyHandler, Command, KeyBinding, KeyBindings,
+    Keymaps, KEYMAP,
+};
 pub use plugin::{PluginSpec, PluginValue, Provide, ViewPlugin};
 pub use style_mod::{StyleModule, StyleSpec, StyleSpecValue};
 pub use viewstate::Viewport;
