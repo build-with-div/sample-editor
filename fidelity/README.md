@@ -100,6 +100,20 @@ cargo test -p editor-view --test fidelity pixels -- --ignored --nocapture
 
 It prints, per case, the differing pixels, those with a channel more than 32 apart, the largest difference and their bounds. It measures twice: in the document the other tests mount, and under the capture's conditions. Those are Linux Chromium's LCD text profile (`RasterConfiguration::chromium_linux_lcd()`) and hidden scrollbars (`scrollbar-width: none` on the scroller, as Div's replay harness renders Chromium's `--hide-scrollbars`). For the cases with line numbers, it also splits the gutter from the content, and measures the content again with Div's frame moved 1px right. With `PIXEL_OUT` set to a directory, it writes each frame and a difference image there. CI runs it on both runners; design section 8 records the numbers and what they come from.
 
+## The bidi order
+
+Upstream's `webtest-bidi.ts` checks the bidi algorithm against the browser it runs in: it draws 20 lines with a span per character, in a left-to-right and then a right-to-left block, and sorts the characters by `offsetLeft`. `bidi_order.py` runs that same query in Chrome for Testing 147.0.7727.50 and writes the visual orders to `fixtures/bidi-order-v1/order.json`:
+
+```bash
+python3 fidelity/bidi_order.py --div /path/to/div
+```
+
+```bash
+python3 fidelity/bidi_order.py --div /path/to/div --check
+```
+
+`view/tests/bidi.rs` compares the port's order of each line in each direction with Chromium's.
+
 ## Still to come
 
 - Behavioural fidelity (M7).

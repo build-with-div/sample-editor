@@ -2,15 +2,16 @@
 //! ([`ViewUpdate`]), scroll targets and the view's facets. View plugins
 //! come with the gutters, which are the first to need them.
 
-use std::sync::LazyLock;
+use std::sync::{Arc, LazyLock};
 
 use editor_state::{
-    Callback, ChangeDesc, ChangeSet, EditorSelection, EditorState, Facet, FacetConfig, RangeSet,
-    SelectionRange, StateEffectType, Transaction,
+    Callback, ChangeDesc, ChangeSet, EditorSelection, EditorState, Facet, FacetConfig, Line,
+    RangeSet, SelectionRange, SpanIterator, StateEffectType, Transaction,
 };
 
 use crate::attributes::Attrs;
-use crate::decoration::{BlockWrapper, DecorationSet};
+use crate::bidi::{auto_direction, Direction, Isolate};
+use crate::decoration::{BlockWrapper, Decoration, DecorationSet, DecorationSpec};
 
 /// A changed range, in positions of the old (`a`) and the new (`b`)
 /// document (`ChangedRange`).
@@ -320,6 +321,119 @@ pub(crate) static DECORATIONS: LazyLock<Facet<DecorationSet>> = LazyLock::new(Fa
 /// Decorations drawn around the content's other decorations
 /// (`outerDecorations`). Upstream also takes functions of the view.
 pub(crate) static OUTER_DECORATIONS: LazyLock<Facet<DecorationSet>> = LazyLock::new(Facet::define);
+
+/// Whether the text direction is read per line (`perLineTextDirection`).
+pub(crate) static PER_LINE_TEXT_DIRECTION: LazyLock<Facet<bool, bool>> = LazyLock::new(|| {
+    Facet::define_with(FacetConfig::new(|values: &[bool]| values.contains(&true)))
+});
+
+/// Ranges ordered as bidi isolates (`bidiIsolatedRanges`). Upstream also
+/// takes functions of the view.
+pub(crate) static BIDI_ISOLATED_RANGES: LazyLock<Facet<DecorationSet>> =
+    LazyLock::new(Facet::define);
+
+// An isolate whose direction `dir=auto` still has to resolve.
+struct UnresolvedIsolate {
+    from: usize,
+    to: usize,
+    direction: Option<Direction>,
+    inner: Vec<UnresolvedIsolate>,
+}
+
+// Builds the isolates of a line from the spans of the isolated ranges.
+struct IsolateBuilder {
+    line_from: usize,
+    result: Vec<UnresolvedIsolate>,
+}
+
+impl SpanIterator<Decoration> for IsolateBuilder {
+    fn span(&mut self, from_doc: usize, to_doc: usize, active: &[Arc<Decoration>], open: usize) {
+        let (from, to) = (from_doc - self.line_from, to_doc - self.line_from);
+        let mut level = &mut self.result;
+        let mut open = open as isize;
+        for deco in active.iter().rev() {
+            let direction = match deco.spec() {
+                DecorationSpec::Mark(spec) => spec.bidi_isolate,
+                _ => None,
+            };
+            let extends = open > 0
+                && level
+                    .last()
+                    .is_some_and(|last| last.to == from && last.direction == direction);
+            if extends {
+                let update = level.last_mut().expect("the isolate to extend");
+                update.to = to;
+                level = &mut update.inner;
+            } else {
+                level.push(UnresolvedIsolate {
+                    from,
+                    to,
+                    direction,
+                    inner: Vec::new(),
+                });
+                level = &mut level.last_mut().expect("the isolate just added").inner;
+            }
+            open -= 1;
+        }
+    }
+
+    fn point(
+        &mut self,
+        _from: usize,
+        _to: usize,
+        _value: &Arc<Decoration>,
+        _active: &[Arc<Decoration>],
+        _open_start: usize,
+        _index: usize,
+    ) {
+    }
+}
+
+/// The bidi isolates of `line` (`getIsolatedRanges`).
+pub(crate) fn get_isolated_ranges(state: &EditorState, line: &Line) -> Vec<Isolate> {
+    let sets = state.facet(&BIDI_ISOLATED_RANGES);
+    if sets.is_empty() {
+        return Vec::new();
+    }
+    let mut builder = IsolateBuilder {
+        line_from: line.from,
+        result: Vec::new(),
+    };
+    RangeSet::spans(sets, line.from, line.to, &mut builder, -1);
+    resolve_isolates(line.text, builder.result)
+}
+
+// `resolveIsolates`: give `dir=auto` isolates the direction of their
+// first strong character outside inner isolates, or left-to-right.
+fn resolve_isolates(text: &str, isolates: Vec<UnresolvedIsolate>) -> Vec<Isolate> {
+    isolates
+        .into_iter()
+        .map(|iso| {
+            let direction = iso.direction.unwrap_or_else(|| {
+                let (mut pos, mut j) = (iso.from, 0);
+                while pos < iso.to {
+                    let next_inner = iso.inner.get(j);
+                    let end = next_inner.map_or(iso.to, |inner| inner.from);
+                    if let Some(dir) = auto_direction(text, pos, end) {
+                        return dir;
+                    }
+                    let Some(next_inner) = next_inner else {
+                        break;
+                    };
+                    pos = next_inner.to;
+                    j += 1;
+                }
+                Direction::Ltr
+            });
+            Isolate {
+                from: iso.from,
+                to: iso.to,
+                direction,
+                inner: resolve_isolates(text, iso.inner),
+            }
+        })
+        .collect()
+}
 
 /// Block wrappers (`blockWrappers`). Upstream also takes functions of the
 /// view.

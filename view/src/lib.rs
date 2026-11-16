@@ -16,7 +16,10 @@
 //!   the viewport and size the gap spacers (`heightmap.ts`): [`BlockInfo`]
 //!   is public as upstream, and the map itself is in [`__test`], as
 //!   upstream exports it for its tests;
-//! - [`ChangedRange`] (`extension.ts`) and [`Direction`] (`bidi.ts`);
+//! - [`ChangedRange`] (`extension.ts`);
+//! - bidirectional text (`bidi.ts`): [`Direction`], the bidi order of a
+//!   line ([`BidiSpan`], [`EditorView::bidi_spans`]), with ranges isolated
+//!   by [`EditorView::bidi_isolated_ranges`], and visual cursor motion;
 //! - [`EditorView`] (`editorview.ts`): `.cm-editor`, `.cm-scroller` and
 //!   `.cm-content`, updated from transactions, with the attributes the
 //!   facets give and the measure cycle; [`Viewport`] and the view state
@@ -34,7 +37,7 @@
 //!   the content of a view made with [`EditorView::new_shared`], the key
 //!   bindings among them.
 //!
-//! Focus, mouse selection, the clipboard, composition and the coordinate
+//! Cursor motion, focus, mouse selection, the clipboard, composition and the coordinate
 //! queries come later in milestone M7.
 //!
 //! Div lacks some DOM features the content needs; the code that stands in
@@ -63,7 +66,7 @@ mod tile;
 mod viewstate;
 
 pub use attributes::{attrs_eq, combine_attrs, Attrs};
-pub use bidi::Direction;
+pub use bidi::{BidiSpan, Direction, Isolate};
 pub use buildtile::BuildError;
 pub use decoration::{
     BlockType, BlockWrapper, BlockWrapperSpec, Decoration, DecorationKind, DecorationSet,
@@ -99,6 +102,7 @@ pub use viewstate::Viewport;
 /// editor view will own.
 #[doc(hidden)]
 pub mod __test {
+    pub use crate::bidi::{compute_order, move_visually};
     pub use crate::decoration::add_range;
     pub use crate::docview::ContentTiles;
     pub use crate::dom::set_style;

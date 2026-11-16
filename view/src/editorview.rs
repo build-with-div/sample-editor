@@ -14,11 +14,12 @@ use std::sync::{Arc, LazyLock};
 
 use div::{Document, Element};
 use editor_state::{
-    facets, Callback, EditorSelection, EditorState, Extension, Facet, Prec, RangeSet,
-    SelectionRange, StateEffect, StateEffectType, Transaction,
+    facets, Callback, ChangeSet, EditorSelection, EditorState, Extension, Facet, Line, Prec,
+    RangeSet, SelectionRange, StateEffect, StateEffectType, Touch, Transaction,
 };
 
 use crate::attributes::{combine_attrs, Attrs};
+use crate::bidi::{compute_order, trivial_order, BidiSpan, Isolate};
 use crate::buildtile::BuildError;
 use crate::decoration::{BlockWrapper, DecorationSet};
 use crate::docview::{open_tag_with, DocView};
@@ -26,6 +27,7 @@ use crate::dom::{
     bounding_rect, create_element, is_scrolled_to_bottom, scroll_rect_into_view, set_attribute,
     update_attrs, Rect, WindowSize,
 };
+use crate::extension::{get_isolated_ranges, BIDI_ISOLATED_RANGES, PER_LINE_TEXT_DIRECTION};
 use crate::extension::{
     get_scroll_margins, ScrollStrategy, ScrollTarget, ViewUpdate, BLOCK_WRAPPERS,
     CONTENT_ATTRIBUTES, CURSOR_SCROLL_MARGIN, DECORATIONS, EDITABLE, EDITOR_ATTRIBUTES,
@@ -100,6 +102,7 @@ pub struct EditorView {
     // The view's identity, for a stored multi-stroke key prefix.
     id: u64,
     input: InputState,
+    bidi_cache: RefCell<Vec<CachedOrder>>,
 }
 
 impl EditorView {
@@ -152,6 +155,7 @@ impl EditorView {
             plugins: Vec::new(),
             id: crate::keymap::next_view_id(),
             input: InputState::new(),
+            bidi_cache: RefCell::new(Vec::new()),
         };
         view.plugins = view
             .state()
@@ -362,6 +366,8 @@ impl EditorView {
             let line_wrapping = self.line_wrapping();
             self.view_state
                 .update(&mut update, scroll_target.clone(), line_wrapping);
+            let cache = std::mem::take(self.bidi_cache.get_mut());
+            *self.bidi_cache.get_mut() = CachedOrder::update(cache, &update.changes);
             if !update.empty() {
                 self.update_plugins(&update);
                 self.input.update(update.transactions.len());
@@ -434,6 +440,7 @@ impl EditorView {
                 plugin.update(self);
             }
             self.ensure_handlers()?;
+            self.bidi_cache.get_mut().clear();
             if let Some(doc_view) = self.doc_view.take() {
                 doc_view.destroy()?;
             }
@@ -982,6 +989,72 @@ impl EditorView {
         self.view_state.default_text_direction
     }
 
+    /// The text direction of the block at `pos`, as CSS assigns it
+    /// (`textDirectionAt`). Without
+    /// [`per_line_text_direction`](Self::per_line_text_direction), or
+    /// outside the viewport, this is [`text_direction`](Self::text_direction).
+    ///
+    /// Upstream first runs a pending measure (`readMeasured`). The port
+    /// measures right after each update (gap 13), so only a measure
+    /// requested with [`request_measure`](Self::request_measure) can wait.
+    pub fn text_direction_at(&self, pos: usize) -> Direction {
+        let viewport = self.viewport();
+        if !*self.state().facet(&PER_LINE_TEXT_DIRECTION)
+            || pos < viewport.from
+            || pos > viewport.to
+        {
+            return self.text_direction();
+        }
+        let Some(doc_view) = &self.doc_view else {
+            return self.text_direction();
+        };
+        // `DocView.textDirectionAt`.
+        let (tile, _) = doc_view.block_at(pos, 1);
+        let rtl = doc_view.content.tiles[tile]
+            .dom
+            .element()
+            .and_then(|dom| dom.computed_style().ok())
+            .is_some_and(|style| *style.direction() == div::typed_style::Direction::Rtl);
+        if rtl {
+            Direction::Rtl
+        } else {
+            Direction::Ltr
+        }
+    }
+
+    /// The bidirectional structure of `line`, which must be in the current
+    /// document, as spans in the order of the [text
+    /// direction](Self::text_direction): leftmost first for left-to-right
+    /// text, rightmost first otherwise (`bidiSpans`).
+    pub fn bidi_spans(&self, line: &Line) -> Vec<BidiSpan> {
+        if line.len() > MAX_BIDI_LINE && line.text.encode_utf16().count() > MAX_BIDI_LINE {
+            return trivial_order(line.len());
+        }
+        let dir = self.text_direction_at(line.from);
+        let mut isolates: Option<Vec<Isolate>> = None;
+        for entry in self.bidi_cache.borrow().iter() {
+            if entry.from == line.from
+                && entry.dir == dir
+                && (entry.fresh
+                    || *isolates.get_or_insert_with(|| get_isolated_ranges(self.state(), line))
+                        == entry.isolates)
+            {
+                return entry.order.clone();
+            }
+        }
+        let isolates = isolates.unwrap_or_else(|| get_isolated_ranges(self.state(), line));
+        let order = compute_order(line.text, dir, &isolates);
+        self.bidi_cache.borrow_mut().push(CachedOrder {
+            from: line.from,
+            to: line.to,
+            dir,
+            isolates,
+            fresh: true,
+            order: order.clone(),
+        });
+        order
+    }
+
     /// Whether lines wrap (`lineWrapping`).
     pub fn line_wrapping(&self) -> bool {
         self.view_state.height_oracle.line_wrapping
@@ -1082,6 +1155,20 @@ impl EditorView {
             },
         )
         .extension()
+    }
+
+    /// Read the text direction of each line from its CSS, instead of
+    /// using the editor's for all lines (`perLineTextDirection`).
+    pub fn per_line_text_direction(enabled: bool) -> Extension {
+        PER_LINE_TEXT_DIRECTION.of(enabled)
+    }
+
+    /// Ranges that the view orders as bidi isolates, as an element with
+    /// `unicode-bidi: isolate` is (`bidiIsolatedRanges`). Each range is a
+    /// mark decoration whose [`MarkSpec::bidi_isolate`](crate::MarkSpec::bidi_isolate) gives its
+    /// direction. Upstream also takes functions of the view.
+    pub fn bidi_isolated_ranges(set: DecorationSet) -> Extension {
+        BIDI_ISOLATED_RANGES.of(set)
     }
 
     /// Decorations to draw (`decorations`).
@@ -1212,6 +1299,44 @@ fn attrs_from_facet(state: &EditorState, facet: &Facet<Attrs>, mut base: Attrs) 
 
 // The value of the plugins `dom_event_handlers` and `dom_event_observers`
 // define (upstream's `{}`).
+// The longest line, in UTF-16 code units, whose bidi structure is
+// computed (`MaxBidiLine`).
+const MAX_BIDI_LINE: usize = 4096;
+
+// A line's bidi structure, kept between calls (`CachedOrder`).
+pub(crate) struct CachedOrder {
+    from: usize,
+    to: usize,
+    dir: Direction,
+    isolates: Vec<Isolate>,
+    fresh: bool,
+    order: Vec<BidiSpan>,
+}
+
+impl CachedOrder {
+    // Keep the last ten entries untouched by `changes`, mapped.
+    fn update(cache: Vec<CachedOrder>, changes: &ChangeSet) -> Vec<CachedOrder> {
+        if changes.is_empty() && !cache.iter().any(|entry| entry.fresh) {
+            return cache;
+        }
+        let last_dir = cache.last().map_or(Direction::Ltr, |entry| entry.dir);
+        let start = cache.len().saturating_sub(10);
+        cache
+            .into_iter()
+            .skip(start)
+            .filter(|entry| {
+                entry.dir == last_dir && changes.touches_range(entry.from, entry.to) == Touch::No
+            })
+            .map(|entry| CachedOrder {
+                from: changes.map_pos(entry.from, 1),
+                to: changes.map_pos(entry.to, -1),
+                fresh: false,
+                ..entry
+            })
+            .collect()
+    }
+}
+
 struct NoValue;
 
 impl PluginValue for NoValue {}
