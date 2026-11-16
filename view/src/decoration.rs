@@ -70,6 +70,14 @@ pub trait WidgetType: Any + Send + Sync {
         0
     }
 
+    /// Whether the editor should ignore `event`, which reached the
+    /// widget's DOM (`ignoreEvent`). When true, the editor's handlers do
+    /// not see it; the default ignores every event, so the widget handles
+    /// its own.
+    fn ignore_event(&self, _event: &div::Event) -> bool {
+        true
+    }
+
     /// Upstream's internal `isHidden`.
     #[doc(hidden)]
     fn is_hidden(&self) -> bool {
@@ -88,6 +96,7 @@ trait DynWidget: Send + Sync {
     fn compare(&self, other: &dyn DynWidget) -> bool;
     fn estimated_height(&self) -> f64;
     fn line_breaks(&self) -> usize;
+    fn ignore_event(&self, event: &div::Event) -> bool;
     fn is_hidden(&self) -> bool;
     fn editable(&self) -> bool;
     fn type_name(&self) -> &'static str;
@@ -115,6 +124,10 @@ impl<W: WidgetType> DynWidget for W {
 
     fn line_breaks(&self) -> usize {
         WidgetType::line_breaks(self)
+    }
+
+    fn ignore_event(&self, event: &div::Event) -> bool {
+        WidgetType::ignore_event(self, event)
     }
 
     fn is_hidden(&self) -> bool {
@@ -186,6 +199,11 @@ impl Widget {
     }
 
     /// Whether both share one instance (upstream's `==` on widgets).
+    /// Whether the editor ignores `event` on the widget (`ignoreEvent`).
+    pub fn ignore_event(&self, event: &div::Event) -> bool {
+        self.0.ignore_event(event)
+    }
+
     pub(crate) fn ptr_eq(&self, other: &Widget) -> bool {
         std::ptr::addr_eq(Arc::as_ptr(&self.0), Arc::as_ptr(&other.0))
     }

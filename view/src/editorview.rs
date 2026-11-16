@@ -7,7 +7,9 @@
 //! gutters among them), keeps the drawing up to date and keeps the
 //! viewport on the visible part of the document.
 
-use std::cell::Ref;
+use std::cell::{Ref, RefCell};
+use std::collections::VecDeque;
+use std::rc::Rc;
 use std::sync::{Arc, LazyLock};
 
 use div::{Document, Element};
@@ -30,10 +32,15 @@ use crate::extension::{
     OUTER_DECORATIONS, SCROLL_INTO_VIEW,
 };
 use crate::heightmap::BlockInfo;
-use crate::plugin::{PluginInstance, PluginValue, ViewPlugin, VIEW_PLUGIN};
+use crate::input::{InputState, Shared};
+use crate::plugin::{
+    log_exception, DomEventHandlers, PluginInstance, PluginSource, PluginSpec, PluginValue,
+    ViewPlugin, VIEW_PLUGIN,
+};
 use crate::style_mod::{InlineRules, StyleSet, StyleSpec};
 use crate::theme::{build_theme, ModuleRef, BASE_THEME, DARK_THEME, NAMES, STYLE_MODULE, THEME};
 use crate::tile::TileKind;
+use crate::tile::Tiles;
 use crate::viewstate::{MeasureContext, MustMeasure, ViewState, Viewport};
 use crate::Direction;
 
@@ -92,6 +99,7 @@ pub struct EditorView {
     plugins: Vec<PluginInstance>,
     // The view's identity, for a stored multi-stroke key prefix.
     id: u64,
+    input: InputState,
 }
 
 impl EditorView {
@@ -143,6 +151,7 @@ impl EditorView {
             window: config.window,
             plugins: Vec::new(),
             id: crate::keymap::next_view_id(),
+            input: InputState::new(),
         };
         view.plugins = view
             .state()
@@ -153,6 +162,7 @@ impl EditorView {
         for plugin in &view.plugins {
             plugin.update(&view);
         }
+        view.ensure_handlers()?;
         let state = view.view_state.state.clone();
         view.doc_view = Some(DocView::new(
             document,
@@ -171,6 +181,56 @@ impl EditorView {
         // registered before they are used.
         view.run_requested_measure()?;
         Ok(view)
+    }
+
+    /// Create a view as [`new`](Self::new) does, shared so that its
+    /// listeners can reach it: the view handles the DOM events on its
+    /// content, as upstream's always does.
+    ///
+    /// A view made with [`new`](Self::new) has no listeners, as Div's
+    /// listeners are `'static` closures with no other way to reach it.
+    /// Events that arrive while the view is borrowed, because it is
+    /// updating or its host holds it, run after its next update or
+    /// measure, as upstream runs them after an update in progress.
+    pub fn new_shared(
+        document: &Document,
+        config: EditorViewConfig,
+    ) -> Result<Rc<RefCell<EditorView>>, BuildError> {
+        let view = Rc::new(RefCell::new(EditorView::new(document, config)?));
+        {
+            let mut inner = view.borrow_mut();
+            inner.input.shared = Some(Shared {
+                view: Rc::downgrade(&view),
+                pending: Rc::new(RefCell::new(VecDeque::new())),
+            });
+            inner.ensure_handlers()?;
+        }
+        Ok(view)
+    }
+
+    pub(crate) fn input(&self) -> &InputState {
+        &self.input
+    }
+
+    pub(crate) fn input_mut(&mut self) -> &mut InputState {
+        &mut self.input
+    }
+
+    // The plugins that have not crashed.
+    pub(crate) fn plugin_sources(&self) -> Vec<PluginSource> {
+        self.plugins
+            .iter()
+            .filter_map(PluginInstance::source)
+            .collect()
+    }
+
+    pub(crate) fn doc_view_tiles(&self) -> &Tiles {
+        &self
+            .doc_view
+            .as_ref()
+            .expect("the view's content")
+            .content
+            .tiles
     }
 
     /// The current editor state (`state`).
@@ -304,6 +364,7 @@ impl EditorView {
                 .update(&mut update, scroll_target.clone(), line_wrapping);
             if !update.empty() {
                 self.update_plugins(&update);
+                self.input.update(update.transactions.len());
             }
             let redrawn = {
                 let vs = &mut self.view_state;
@@ -342,7 +403,9 @@ impl EditorView {
                 listener(&update);
             }
         }
-        self.run_requested_measure()
+        let result = self.run_requested_measure();
+        self.run_pending_events();
+        result
     }
 
     /// Reset the view to `new_state`, redrawing everything (`setState`).
@@ -370,6 +433,7 @@ impl EditorView {
             for plugin in &self.plugins {
                 plugin.update(self);
             }
+            self.ensure_handlers()?;
             if let Some(doc_view) = self.doc_view.take() {
                 doc_view.destroy()?;
             }
@@ -386,7 +450,9 @@ impl EditorView {
         self.update_state = UpdateState::Idle;
         result?;
         self.request_measure();
-        self.run_requested_measure()
+        let result = self.run_requested_measure();
+        self.run_pending_events();
+        result
     }
 
     // `updatePlugins`: keep the plugins of the new state, create the new
@@ -421,6 +487,11 @@ impl EditorView {
         }
         for plugin in &self.plugins {
             plugin.update(self);
+        }
+        if prev_specs != specs {
+            if let Err(error) = self.ensure_handlers() {
+                log_exception("CodeMirror plugin crashed", &error);
+            }
         }
     }
 
@@ -483,6 +554,7 @@ impl EditorView {
                 }
             }
         }
+        self.run_pending_events();
         Ok(())
     }
 
@@ -983,6 +1055,35 @@ impl EditorView {
         Ok(Prec::lowest(STYLE_MODULE.of(ModuleRef(Arc::new(module)))))
     }
 
+    /// DOM event handlers for the content (`domEventHandlers`): each
+    /// returns true when it handled the event, which then has its default
+    /// prevented and is not given to later handlers. Handlers given with
+    /// higher precedence run first.
+    pub fn dom_event_handlers(handlers: DomEventHandlers) -> Extension {
+        ViewPlugin::define(
+            |_| Ok(NoValue),
+            PluginSpec {
+                event_handlers: handlers,
+                ..PluginSpec::default()
+            },
+        )
+        .extension()
+    }
+
+    /// DOM event observers for the content (`domEventObservers`): like
+    /// handlers, but all run, before the handlers, and cannot prevent
+    /// the event's default.
+    pub fn dom_event_observers(observers: DomEventHandlers) -> Extension {
+        ViewPlugin::define(
+            |_| Ok(NoValue),
+            PluginSpec {
+                event_observers: observers,
+                ..PluginSpec::default()
+            },
+        )
+        .extension()
+    }
+
     /// Decorations to draw (`decorations`).
     pub fn decorations(set: DecorationSet) -> Extension {
         DECORATIONS.of(set)
@@ -1108,3 +1209,9 @@ fn attrs_from_facet(state: &EditorState, facet: &Facet<Attrs>, mut base: Attrs) 
     }
     base
 }
+
+// The value of the plugins `dom_event_handlers` and `dom_event_observers`
+// define (upstream's `{}`).
+struct NoValue;
+
+impl PluginValue for NoValue {}
