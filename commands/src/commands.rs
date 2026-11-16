@@ -8,7 +8,7 @@ use editor_state::{
     SelectionRange, Text, Transaction, TransactionSpec,
 };
 
-type Dispatch<'a> = &'a mut dyn FnMut(Transaction);
+pub(crate) type Dispatch<'a> = &'a mut dyn FnMut(Transaction);
 
 // JavaScript's `\s`.
 pub(crate) fn is_js_space(c: char) -> bool {
@@ -44,7 +44,7 @@ pub(crate) fn set_sel(state: &EditorState, selection: EditorSelection) -> Transa
         .expect("a selection inside the document")
 }
 
-fn update(state: &EditorState, spec: TransactionSpec) -> Transaction {
+pub(crate) fn update(state: &EditorState, spec: TransactionSpec) -> Transaction {
     state
         .update(spec)
         .expect("command changes fit the document")
@@ -278,7 +278,7 @@ pub fn delete_trailing_whitespace(state: &EditorState, dispatch: Dispatch) -> bo
     true
 }
 
-fn change_by_range(
+pub(crate) fn change_by_range(
     state: &EditorState,
     f: impl FnMut(&SelectionRange) -> RangeChange,
 ) -> TransactionSpec {
@@ -287,7 +287,7 @@ fn change_by_range(
         .expect("changes inside the document")
 }
 
-fn range_only(range: &SelectionRange) -> RangeChange {
+pub(crate) fn range_only(range: &SelectionRange) -> RangeChange {
     RangeChange {
         range: *range,
         changes: None,

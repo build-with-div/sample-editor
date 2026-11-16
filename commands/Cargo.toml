@@ -8,6 +8,7 @@ publish = false
 description = "Port of @codemirror/commands 6.11.1 to Rust on Div"
 
 [dependencies]
+editor-language = { path = "../language" }
 editor-state = { path = "../state" }
 editor-view = { path = "../view" }
 

@@ -15,7 +15,7 @@ use crate::commands::{extended, is_js_space, range_end, set_sel, update_sel};
 
 // Dispatch `tr` to the view. An error from the view's DOM is logged, as
 // `editor_view::state_command` logs one.
-fn dispatch(view: &mut EditorView, tr: Transaction) {
+pub(crate) fn dispatch(view: &mut EditorView, tr: Transaction) {
     if let Err(error) = view.dispatch(tr) {
         eprintln!("CodeMirror command: {error}");
     }
@@ -124,7 +124,7 @@ pub fn cursor_group_backward(view: &mut EditorView) -> bool {
 
 // `toGroupStart`: move over the group `start` begins and the whitespace
 // after it.
-fn to_group_start<'a>(view: &'a EditorView, pos: usize, start: &str) -> ByChar<'a> {
+pub(crate) fn to_group_start<'a>(view: &'a EditorView, pos: usize, start: &str) -> ByChar<'a> {
     let categorize = view.state().char_categorizer(pos);
     let cat = categorize(start);
     let mut initial = cat != CharCategory::Space;
