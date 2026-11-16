@@ -21,12 +21,14 @@ use editor_state::{
 use crate::attributes::{combine_attrs, Attrs};
 use crate::bidi::{compute_order, trivial_order, BidiSpan, Isolate};
 use crate::buildtile::BuildError;
+use crate::cursor::{self, by_group, skip_atoms, ByChar};
 use crate::decoration::{BlockWrapper, DecorationSet};
 use crate::docview::{open_tag_with, DocView};
 use crate::dom::{
     bounding_rect, create_element, is_scrolled_to_bottom, scroll_rect_into_view, set_attribute,
     update_attrs, Rect, WindowSize,
 };
+use crate::extension::ATOMIC_RANGES;
 use crate::extension::{get_isolated_ranges, BIDI_ISOLATED_RANGES, PER_LINE_TEXT_DIRECTION};
 use crate::extension::{
     get_scroll_margins, ScrollStrategy, ScrollTarget, ViewUpdate, BLOCK_WRAPPERS,
@@ -1055,6 +1057,72 @@ impl EditorView {
         order
     }
 
+    /// Move a cursor position by grapheme cluster (`moveByChar`).
+    /// `forward` moves away from the line's start. Bidirectional text is
+    /// traversed in visual order, by the [text
+    /// direction](Self::text_direction) of the starting line. From the
+    /// last position of a line, the result is across the line break; with
+    /// no further line, it is `start`. The result skips atomic ranges.
+    pub fn move_by_char(&self, start: &SelectionRange, forward: bool) -> SelectionRange {
+        skip_atoms(
+            self,
+            start,
+            cursor::move_by_char(self, start, forward, None),
+        )
+    }
+
+    /// [`move_by_char`](Self::move_by_char), moving over more than one
+    /// cluster (`moveByChar` with `by`): `by` is called with the first
+    /// cluster and returns a predicate that tells, for each cluster after
+    /// it, whether to move over it too.
+    pub fn move_by_char_by<'a>(
+        &'a self,
+        start: &SelectionRange,
+        forward: bool,
+        by: impl FnOnce(&str) -> ByChar<'a> + 'a,
+    ) -> SelectionRange {
+        let moved = cursor::move_by_char(self, start, forward, Some(Box::new(by)));
+        skip_atoms(self, start, moved)
+    }
+
+    /// Move a cursor position across the next group of word characters,
+    /// or of other characters that are not whitespace, with the
+    /// whitespace before it (`moveByGroup`).
+    pub fn move_by_group(&self, start: &SelectionRange, forward: bool) -> SelectionRange {
+        let head = start.head();
+        let moved = cursor::move_by_char(
+            self,
+            start,
+            forward,
+            Some(Box::new(move |initial: &str| by_group(self, head, initial))),
+        );
+        skip_atoms(self, start, moved)
+    }
+
+    /// The cursor at the visual start or end of `line`
+    /// (`visualLineSide`, deprecated upstream).
+    pub fn visual_line_side(&self, line: &Line, end: bool) -> SelectionRange {
+        if end {
+            EditorSelection::cursor_with(line.to, 1, None, None)
+        } else {
+            EditorSelection::cursor_with(line.from, -1, None, None)
+        }
+    }
+
+    /// Move to the next line boundary in a direction
+    /// (`moveToLineBoundary`). With `include_wrap`, in a wrapped line,
+    /// upstream stops at the next wrap point; the port goes to the line's
+    /// start or end until Div offers the geometry that finds wrap points
+    /// (gaps 5 and 6).
+    pub fn move_to_line_boundary(
+        &self,
+        start: &SelectionRange,
+        forward: bool,
+        include_wrap: bool,
+    ) -> SelectionRange {
+        cursor::move_to_line_boundary(self, start, forward, include_wrap)
+    }
+
     /// Whether lines wrap (`lineWrapping`).
     pub fn line_wrapping(&self) -> bool {
         self.view_state.height_oracle.line_wrapping
@@ -1155,6 +1223,13 @@ impl EditorView {
             },
         )
         .extension()
+    }
+
+    /// Ranges the cursor moves over as a unit (`atomicRanges`).
+    pub fn atomic_ranges(
+        ranges: impl Fn(&EditorView) -> DecorationSet + Send + Sync + 'static,
+    ) -> Extension {
+        ATOMIC_RANGES.of(Callback(Arc::new(ranges)))
     }
 
     /// Read the text direction of each line from its CSS, instead of

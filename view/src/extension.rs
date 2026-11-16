@@ -12,6 +12,7 @@ use editor_state::{
 use crate::attributes::Attrs;
 use crate::bidi::{auto_direction, Direction, Isolate};
 use crate::decoration::{BlockWrapper, Decoration, DecorationSet, DecorationSpec};
+use crate::EditorView;
 
 /// A changed range, in positions of the old (`a`) and the new (`b`)
 /// document (`ChangedRange`).
@@ -321,6 +322,14 @@ pub(crate) static DECORATIONS: LazyLock<Facet<DecorationSet>> = LazyLock::new(Fa
 /// Decorations drawn around the content's other decorations
 /// (`outerDecorations`). Upstream also takes functions of the view.
 pub(crate) static OUTER_DECORATIONS: LazyLock<Facet<DecorationSet>> = LazyLock::new(Facet::define);
+
+/// A function of the view that gives ranges the cursor moves over as a
+/// unit (`atomicRanges`): [`EditorView::move_by_char`] and the other
+/// motions skip them.
+pub type AtomicRanges = Callback<dyn Fn(&EditorView) -> DecorationSet + Send + Sync>;
+
+/// The view's atomic ranges (`atomicRanges`).
+pub(crate) static ATOMIC_RANGES: LazyLock<Facet<AtomicRanges>> = LazyLock::new(Facet::define);
 
 /// Whether the text direction is read per line (`perLineTextDirection`).
 pub(crate) static PER_LINE_TEXT_DIRECTION: LazyLock<Facet<bool, bool>> = LazyLock::new(|| {
