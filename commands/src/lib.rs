@@ -12,14 +12,19 @@
 //!   [`simplify_selection`]), and line and whitespace editing
 //!   ([`move_line_up`], [`copy_line_down`], [`transpose_chars`],
 //!   [`insert_newline_keep_indent`], [`delete_trailing_whitespace`] and
-//!   the like).
-//!
-//! Every command has the [`StateCommand`] shape.
+//!   the like);
+//! - the motion of `commands.ts` that needs the view, by character,
+//!   group and subword in visual order and to line boundaries
+//!   ([`cursor_char_left`], [`cursor_group_forward`],
+//!   [`cursor_subword_forward`], [`cursor_line_boundary_backward`],
+//!   [`select_char_right`] and the like), which take the view as
+//!   upstream's `Command`s do; the others have the [`StateCommand`] shape.
 //!
 //! Not yet ported:
 //! - the other commands of `commands.ts` and `comment.ts`, and the
-//!   keymaps: they need the view (motion by visual line, group or page,
-//!   atomic ranges, screen-reader announcements on deletion) or
+//!   keymaps: they need the view's coordinates (motion by visual line or
+//!   page, Div gaps 5 and 6), the deletion commands with their
+//!   screen-reader announcements, or
 //!   `@codemirror/language` (indentation, the syntax tree, bracket
 //!   matching, comment tokens);
 //! - `historyKeymap` and the handler for the `historyUndo` and
@@ -30,6 +35,7 @@
 
 mod commands;
 mod history;
+mod motion;
 
 pub use commands::{
     copy_line_down, copy_line_up, cursor_char_backward_logical, cursor_char_forward_logical,
@@ -37,6 +43,18 @@ pub use commands::{
     insert_newline_keep_indent, move_line_down, move_line_up, select_all,
     select_char_backward_logical, select_char_forward_logical, select_doc_end, select_doc_start,
     select_line, simplify_selection, split_line, transpose_chars,
+};
+
+pub use motion::{
+    cursor_char_backward, cursor_char_forward, cursor_char_left, cursor_char_right,
+    cursor_group_backward, cursor_group_forward, cursor_group_forward_win, cursor_group_left,
+    cursor_group_right, cursor_line_boundary_backward, cursor_line_boundary_forward,
+    cursor_line_boundary_left, cursor_line_boundary_right, cursor_line_end, cursor_line_start,
+    cursor_subword_backward, cursor_subword_forward, select_char_backward, select_char_forward,
+    select_char_left, select_char_right, select_group_backward, select_group_forward,
+    select_group_forward_win, select_group_left, select_group_right, select_line_boundary_backward,
+    select_line_boundary_forward, select_line_boundary_left, select_line_boundary_right,
+    select_line_end, select_line_start, select_subword_backward, select_subword_forward,
 };
 
 pub use history::{

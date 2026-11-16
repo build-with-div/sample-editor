@@ -59,10 +59,11 @@ The web platform features they depend on:
 | 27 | `offsetWidth`/`offsetHeight`/`offsetParent` | ● | | | |
 | 28 | Computed `overflow-x`/`overflow-y` as a pair (`getComputedStyle`) | ● | | | |
 | 29 | `removeEventListener` for one listener, and listener options (`passive`) | ● | | | |
+| 30 | `Intl.Segmenter` word segmentation, with dictionary breaking for CJK | ● | | | |
 | — | `white-space: pre`/`pre-wrap`, `tab-size`, font metrics, `scrollTop`, `scrollIntoView`, `getBoundingClientRect`, `focus()` | ● | ● | ● | ● |
 
 ● relies on it; ○ uses it in part. The columns come from these packages'
-documented architecture; rows 26–29 come from the CM6 port, and the other
+documented architecture; rows 26–30 come from the CM6 port, and the other
 columns are not yet checked for them. Phase 2 step 1 pins exact versions and records each
 API call from their published source, so the matrix becomes a checked list
 (section 8).
@@ -115,11 +116,12 @@ div-platform, div-macros, div-cli), **components** (div-components). Size:
 | 27 | `offsetWidth`/`offsetHeight`/`offsetParent` | **Missing**: `Element` has `client_*`, `scroll_*` and `bounding_rect`, no `offset_*`. CM6's `getScale` divides the bounding rectangle by `offsetWidth` to find a CSS transform's scale | framework | S | WPT `css/cssom-view/` |
 | 28 | Computed `overflow` pair | **Wrong value**: `Element::computed_style` reports `overflow-y: visible` beside `overflow-x: auto`, where CSS Overflow 3 (and Blink's `StyleAdjuster::AdjustOverflow`) computes `auto`. Div's layout applies the pair (`div-layout/src/scroll_area.rs:242`, `overflow_pair`), so the element scrolls, but CM6's `scrollRectIntoView` reads `overflowY` and passes over `.cm-scroller`, which sets only `overflow-x: auto` | engine (style: the computed value), framework (`computed_style`) | S | WPT `css/css-overflow/overflow-computed*`; the `scrolled` capture |
 | 29 | `removeEventListener` for one listener, listener options | **Missing**: `Element::on(type, callback)` returns no handle to remove the listener by, and `remove_event(type)` removes every listener of the type on the element, the host's among them (`divui/src/element.rs:1132,1146`); `on` takes no options. CM6 listens on the content for each event type its handlers name, removes the listeners of types no longer handled when the view is reconfigured, and adds observer-only types as `passive` | framework (events) | S | WPT `dom/events/EventTarget-removeEventListener*`, `dom/events/AddEventListenerOptions-passive*` |
+| 30 | `Intl.Segmenter` (word granularity) | **Missing**: divui exposes no word segmentation. Div's text crates use `unicode-segmentation` 1.10 (UAX #29 rules), which has no dictionary breaking, so a run of CJK ideographs is one word where ICU, behind Chromium's segmenter, splits it into words. `@codemirror/commands` subword motion splits CJK runs at the segmenter's word boundaries | engine (text: dictionary word breaking); framework (a segmenter API) | M | test262 `intl402/Segmenter/`; the CJK cases of upstream's `webtest-commands.ts` |
 
 Priority for the code editor, CM6 first: **16** (without it the DOM
 approach cannot be interactive), **2, 3, 4, 5, 6** (the editing host and
 selection geometry), **14** (CM6 is styled entirely by injected
-stylesheets) with **22**, **7, 8, 10, 11, 13**, then **15, 17**, **23–29**. Monaco additionally
+stylesheets) with **22**, **7, 8, 10, 11, 13**, then **15, 17**, **23–30**. Monaco additionally
 needs **21** (or **20**) and **18**. Rich text (ProseMirror, Lexical)
 needs the same plus **9** and `text/html` in **8**.
 
@@ -494,6 +496,8 @@ while Div implements the features. Each is labelled in code with
 | The content's listener for an event type stays once added, finding no handlers after a reconfiguration drops them; no listener is passive | 29 | `removeEventListener` for one listener, listener options |
 | The tile an event's target belongs to (`Tile.get`) found by a linear search over the tiles with `is_same_node`, where upstream reads a property on the DOM node | 24 | Node identity to key a map |
 | The DOM observer's pending changes are not flushed before the key handlers run | 10 | `MutationObserver` |
+| `moveToLineBoundary` with `includeWrap` in a wrapped line goes to the line's start or end, not the next wrap point | 5, 6 | Range geometry, `caretPositionFromPoint` |
+| Subword motion moves over a run of CJK word characters as one subword, as upstream does without `Intl.Segmenter` | 30 | `Intl.Segmenter` |
 
 ## 8. Phase 2 plan
 
@@ -829,6 +833,29 @@ Progress:
     `moveToLineBoundary`, atomic ranges) comes in the next part; the
     vertical and wrapped-line motion needs gaps 5 and 6.
   - No new Div gaps.
+- M7, fourth part: cursor motion.
+  - `cursor.ts`, the motion that follows the text: `moveByChar` in
+    visual order over the bidi spans, `byGroup`, `blockAt`,
+    `moveToLineBoundary`, and atomic ranges (`atomicRanges`,
+    `skipAtomicRanges`, `skipAtoms`), as the view's `move_by_char`,
+    `move_by_char_by`, `move_by_group`, `move_to_line_boundary` and
+    `visual_line_side`. `moveVertically` and `posAtCoords` need gaps 5
+    and 6; so does the wrap point `moveToLineBoundary` finds in a
+    wrapped line, which the port replaces with the line's boundary
+    (section 7).
+  - `commands.ts`: the 34 commands that move by character, group,
+    subword and line boundary (`cursorCharLeft` to `selectLineEnd`),
+    taking the view as upstream's `Command`s do. `editor-commands` now
+    depends on `editor-view`.
+  - Tests: the 24 cases of upstream's `webtest-commands.ts` that need no
+    coordinates pass (subword motion, `selectCharLeft` in both
+    directions, `selectCharRight`); its two CJK subword cases, which
+    upstream runs only where `Intl.Segmenter` exists, are ignored for
+    gap 30; its 32 vertical-motion cases wait for gaps 5 and 6. Ten
+    port-specific tests cover character, cluster, right-to-left, group,
+    Windows-style group and line-boundary motion, indentation, line
+    selection and atomic ranges.
+  - New Div gap 30 (section 2), with labelled scaffolding (section 7).
 
 Every milestone after M5 runs the fidelity checks in section 5 and reports
 measured numbers. The highlighter (M8) follows CM6's design, a parse tree

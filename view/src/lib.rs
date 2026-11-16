@@ -35,10 +35,14 @@
 //! - DOM event handling (`input.ts`): the handlers and observers plugins
 //!   and [`EditorView::dom_event_handlers`] register run for the events on
 //!   the content of a view made with [`EditorView::new_shared`], the key
-//!   bindings among them.
+//!   bindings among them;
+//! - cursor motion that follows the text (`cursor.ts`):
+//!   [`EditorView::move_by_char`], [`EditorView::move_by_group`],
+//!   [`EditorView::move_to_line_boundary`] and atomic ranges
+//!   ([`EditorView::atomic_ranges`]).
 //!
-//! Cursor motion, focus, mouse selection, the clipboard, composition and the coordinate
-//! queries come later in milestone M7.
+//! Vertical motion, focus, mouse selection, the clipboard, composition
+//! and the coordinate queries come later in milestone M7.
 //!
 //! Div lacks some DOM features the content needs; the code that stands in
 //! for them is marked `div-gap` with the gap's number in the sample's
@@ -49,6 +53,7 @@
 mod attributes;
 mod bidi;
 mod buildtile;
+mod cursor;
 mod decoration;
 mod docview;
 mod dom;
@@ -68,6 +73,7 @@ mod viewstate;
 pub use attributes::{attrs_eq, combine_attrs, Attrs};
 pub use bidi::{BidiSpan, Direction, Isolate};
 pub use buildtile::BuildError;
+pub use cursor::{skip_atomic_ranges, ByChar};
 pub use decoration::{
     BlockType, BlockWrapper, BlockWrapperSpec, Decoration, DecorationKind, DecorationSet,
     DecorationSpec, LineSpec, MarkSpec, ReplaceSpec, SpecData, Widget, WidgetSpec, WidgetType,
@@ -75,8 +81,8 @@ pub use decoration::{
 pub use dom::{DomNode, Rect, WindowSize};
 pub use editorview::{EditorView, EditorViewConfig, UpdateListener};
 pub use extension::{
-    update_flag, ChangedRange, Margins, ScrollMarginSource, ScrollStrategy, ScrollTarget,
-    ViewUpdate,
+    update_flag, AtomicRanges, ChangedRange, Margins, ScrollMarginSource, ScrollStrategy,
+    ScrollTarget, ViewUpdate,
 };
 pub use gutter::{
     gutter, gutters, highlight_active_line_gutter, line_numbers, FormatNumber, GutterConfig,

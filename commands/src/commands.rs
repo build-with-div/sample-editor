@@ -11,7 +11,7 @@ use editor_state::{
 type Dispatch<'a> = &'a mut dyn FnMut(Transaction);
 
 // JavaScript's `\s`.
-fn is_js_space(c: char) -> bool {
+pub(crate) fn is_js_space(c: char) -> bool {
     matches!(
         c,
         '\t' | '\n' | '\u{b}' | '\u{c}' | '\r' | ' ' | '\u{a0}' | '\u{1680}' | '\u{2000}'
@@ -25,7 +25,7 @@ fn is_js_space(c: char) -> bool {
     )
 }
 
-fn update_sel(
+pub(crate) fn update_sel(
     sel: &EditorSelection,
     by: impl FnMut(&SelectionRange) -> SelectionRange,
 ) -> EditorSelection {
@@ -33,7 +33,7 @@ fn update_sel(
         .expect("mapped ranges form a selection")
 }
 
-fn set_sel(state: &EditorState, selection: EditorSelection) -> Transaction {
+pub(crate) fn set_sel(state: &EditorState, selection: EditorSelection) -> Transaction {
     state
         .update(TransactionSpec {
             selection: Some(selection),
@@ -63,7 +63,7 @@ fn move_sel(
     true
 }
 
-fn range_end(range: &SelectionRange, forward: bool) -> SelectionRange {
+pub(crate) fn range_end(range: &SelectionRange, forward: bool) -> SelectionRange {
     EditorSelection::cursor(if forward { range.to() } else { range.from() })
 }
 
@@ -104,13 +104,14 @@ pub fn cursor_char_backward_logical(state: &EditorState, dispatch: Dispatch) -> 
     move_by_char_logical(state, dispatch, false)
 }
 
-fn extend_sel(
-    state: &EditorState,
-    dispatch: Dispatch,
+// The selection `extendSel` makes: each range's head moved by `how`,
+// an undirectional range first turned to face `forward`.
+pub(crate) fn extended(
+    selection: &EditorSelection,
     forward: bool,
     mut how: impl FnMut(&SelectionRange) -> SelectionRange,
-) -> bool {
-    let selection = update_sel(state.selection(), |range| {
+) -> EditorSelection {
+    update_sel(selection, |range| {
         let mut range = *range;
         if range.undirectional() && (range.head() >= range.anchor()) != forward {
             range = EditorSelection::range(range.head(), range.anchor());
@@ -123,7 +124,16 @@ fn extend_sel(
             head.bidi_level().filter(|&level| level != 0),
             head.assoc(),
         )
-    });
+    })
+}
+
+fn extend_sel(
+    state: &EditorState,
+    dispatch: Dispatch,
+    forward: bool,
+    how: impl FnMut(&SelectionRange) -> SelectionRange,
+) -> bool {
+    let selection = extended(state.selection(), forward, how);
     if selection.eq_with(state.selection(), false) {
         return false;
     }
